@@ -11,10 +11,14 @@
             "id": "a726c1c1439bd0ae",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Проверка гита.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "Новая вкладка"
+              "title": "Проверка гита"
             }
           }
         ]
@@ -163,5 +167,7 @@
     }
   },
   "active": "a726c1c1439bd0ae",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "Проверка гита.md"
+  ]
 }
