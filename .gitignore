@@ -1,0 +1,24 @@
+# Obsidian: персональное состояние интерфейса, не часть переносимого vault
+ObsidianVault/.obsidian/workspace.json
+ObsidianVault/.obsidian/workspace-mobile.json
+ObsidianVault/.trash/
+
+# Локальные инструкции и состояние агентов
+CLAUDE.local.md
+.codex-log/
+
+# Unity: генерируемые и локальные каталоги будущего проекта
+Product/Unity/Library/
+Product/Unity/Temp/
+Product/Unity/Obj/
+Product/Unity/Logs/
+Product/Unity/UserSettings/
+Product/Unity/Build/
+Product/Unity/Builds/
+
+# IDE и ОС
+.idea/
+.vs/
+.vscode/
+.DS_Store
+Thumbs.db
