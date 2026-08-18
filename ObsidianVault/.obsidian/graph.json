@@ -1,0 +1,142 @@
+{
+  "collapse-filter": true,
+  "search": "-file:\"Проверка гита\" -path:\"00 Служебное\"",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": true,
+  "showOrphans": false,
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "tag:#подтверждено",
+      "color": {
+        "a": 1,
+        "rgb": 3066993
+      }
+    },
+    {
+      "query": "tag:#редактировано",
+      "color": {
+        "a": 1,
+        "rgb": 15844367
+      }
+    },
+    {
+      "query": "tag:#источник",
+      "color": {
+        "a": 1,
+        "rgb": 9807270
+      }
+    },
+    {
+      "query": "tag:#вопрос",
+      "color": {
+        "a": 1,
+        "rgb": 11032055
+      }
+    },
+    {
+      "query": "tag:#сборка",
+      "color": {
+        "a": 1,
+        "rgb": 9133302
+      }
+    },
+    {
+      "query": "tag:#конфигурация",
+      "color": {
+        "a": 1,
+        "rgb": 14239471
+      }
+    },
+    {
+      "query": "tag:#система",
+      "color": {
+        "a": 1,
+        "rgb": 1752220
+      }
+    },
+    {
+      "query": "tag:#механика",
+      "color": {
+        "a": 1,
+        "rgb": 3900150
+      }
+    },
+    {
+      "query": "tag:#сущность",
+      "color": {
+        "a": 1,
+        "rgb": 2278750
+      }
+    },
+    {
+      "query": "tag:#роль",
+      "color": {
+        "a": 1,
+        "rgb": 10079283
+      }
+    },
+    {
+      "query": "tag:#структура",
+      "color": {
+        "a": 1,
+        "rgb": 11369865
+      }
+    },
+    {
+      "query": "tag:#представление",
+      "color": {
+        "a": 1,
+        "rgb": 440020
+      }
+    },
+    {
+      "query": "tag:#преобразователь",
+      "color": {
+        "a": 1,
+        "rgb": 16096779
+      }
+    },
+    {
+      "query": "tag:#концепция",
+      "color": {
+        "a": 1,
+        "rgb": 15680580
+      }
+    },
+    {
+      "query": "tag:#пример",
+      "color": {
+        "a": 1,
+        "rgb": 9741240
+      }
+    },
+    {
+      "query": "tag:#ИИ",
+      "color": {
+        "a": 1,
+        "rgb": 8359053
+      }
+    },
+    {
+      "query": "-path:\"10 Узлы\" -path:\"00 Служебное\"",
+      "color": {
+        "a": 1,
+        "rgb": 6583435
+      }
+    }
+  ],
+  "collapse-display": true,
+  "showArrow": true,
+  "textFadeMultiplier": -0.6,
+  "nodeSizeMultiplier": 1.25,
+  "lineSizeMultiplier": 1.15,
+  "collapse-forces": false,
+  "centerStrength": 0.0602926829268293,
+  "repelStrength": 9.57268292682927,
+  "linkStrength": 1,
+  "linkDistance": 302,
+  "scale": 0.7132754626224432,
+  "close": false
+}
