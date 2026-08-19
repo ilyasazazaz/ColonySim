@@ -29,3 +29,9 @@ The Binding of Isaac — конфигурация короткого проце�
 - задаёт → [[Цели и завершение сценария]]
 
 Источники: [рассказ Edmund McMillen о разработке игры](https://www.gamedeveloper.com/business/postmortem-mcmillen-and-himsl-s-i-the-binding-of-isaac-i-), [официальная страница Rebirth](https://store.steampowered.com/app/250900/The_Binding_of_Isaac__Rebirth/).
+
+## Выделенные версии систем
+
+- [[Здоровье как ресурс The Binding of Isaac]] одновременно ограничивает бой, сделки и продолжение забега.
+- [[Комнатный бой The Binding of Isaac]] сосредотачивает расчёт в активной локации.
+- [[Синергии предметов The Binding of Isaac]] делает сочетание эффектов основной системой развития героя.

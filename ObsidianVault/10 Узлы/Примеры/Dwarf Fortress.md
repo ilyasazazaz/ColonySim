@@ -39,3 +39,10 @@ Dwarf Fortress ближе остальных примеров к идее мир
 - превращает поражение в → [[Цели и завершение сценария]]
 
 Источники: [официальная цель разработки](https://bay12games.com/dwarves/dev.html), [Simulation Principles from Dwarf Fortress, Tarn Adams](https://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter41_Simulation_Principles_from_Dwarf_Fortress.pdf), [интервью о генерации истории, здоровье и оптимизации](https://www.gamedeveloper.com/programming/how-tarn-adams-upgraded-and-optimized-dwarf-fortress-for-its-official-steam-release).
+
+## Выделенные версии систем
+
+- [[Исторический мир Dwarf Fortress]] создаёт подтверждённое прошлое до входа игрока.
+- [[Анатомическое здоровье Dwarf Fortress]] и [[Анатомический бой Dwarf Fortress]] разделяют общий язык частей тела, тканей и функций.
+- [[Навыки и характеристики Dwarf Fortress]] проводят состояние исполнителя к скорости и качеству конкретного труда.
+- [[Объявления работ Dwarf Fortress]] отделяют работу от дварфа, который позднее принимает её.

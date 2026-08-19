@@ -50,17 +50,38 @@
       }
     },
     {
-      "query": "tag:#семейство",
+      "query": "tag:#система",
       "color": {
         "a": 1,
-        "rgb": 6514417
+        "rgb": 4149685
       }
     },
     {
-      "query": "tag:#модель",
+      "query": "tag:#тип",
       "color": {
         "a": 1,
-        "rgb": 1357990
+        "rgb": 38536
+      }
+    },
+    {
+      "query": "tag:#версия",
+      "color": {
+        "a": 1,
+        "rgb": 5025616
+      }
+    },
+    {
+      "query": "tag:#интерфейс",
+      "color": {
+        "a": 1,
+        "rgb": 9323693
+      }
+    },
+    {
+      "query": "tag:#механика",
+      "color": {
+        "a": 1,
+        "rgb": 15277667
       }
     },
     {
@@ -101,7 +122,7 @@
   ],
   "collapse-display": true,
   "showArrow": true,
-  "textFadeMultiplier": -0.25,
+  "textFadeMultiplier": -0.2,
   "nodeSizeMultiplier": 1.15,
   "lineSizeMultiplier": 1,
   "collapse-forces": false,
@@ -109,6 +130,6 @@
   "repelStrength": 12,
   "linkStrength": 0.85,
   "linkDistance": 230,
-  "scale": 0.13168724279835425,
-  "close": false
+  "scale": 0.25883865621816365,
+  "close": true
 }

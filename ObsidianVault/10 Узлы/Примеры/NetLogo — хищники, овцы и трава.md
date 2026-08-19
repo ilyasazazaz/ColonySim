@@ -22,3 +22,7 @@ NetLogo также поставляется с системно-динамиче
 Волк и овца являются агентами модели, но слово [[Пешка]] для них полезно лишь в игре с косвенным управлением персонажами. Трава может быть клеточным состоянием среды, запасом или отдельным объектом — это выбор конкретной модели, а не сущность «по природе».
 
 Источники: [Wolf Sheep Predation в библиотеке NetLogo](https://ccl.northwestern.edu/netlogo/models/WolfSheepPredation), [руководство System Dynamics Modeler и гибридный вариант](https://ccl.northwestern.edu/netlogo/6.1.1/docs/systemdynamics.html), [взаимодействие двух самостоятельных моделей через LevelSpace](https://ccl.northwestern.edu/netlogo/models/ModelInteractionsExample).
+
+## Выделенная версия систем
+
+[[Агентная экология NetLogo]] получает популяционную динамику из локального поведения отдельных животных и возобновления ресурса.

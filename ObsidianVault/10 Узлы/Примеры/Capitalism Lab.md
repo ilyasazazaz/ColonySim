@@ -43,3 +43,8 @@ tags:
 - использует → [[Финансы и капитал]]
 
 Источники: [официальный сайт](https://www.capitalismlab.com/), [описание экономической симуляции](https://www.capitalismlab.com/economics-simulation/), [управление дочерними компаниями и отдельными фирмами](https://www.capitalismlab.com/subsidiary-dlc/subsidiary-control/), [функциональная структура сервисной фирмы](https://www.capitalismlab.com/service-firms/).
+
+## Выделенные версии систем
+
+- [[Фирменная экономика Capitalism Lab]] связывает компанию, филиалы, рынок, производство и капитал.
+- [[Продуктовые технологии Capitalism Lab]] делает исследование свойством конкурентной товарной линии.

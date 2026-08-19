@@ -16,3 +16,7 @@ Cities: Skylines II рассматривает город одновременн
 Дневник Economy 2.0 также подчёркивает игровую сторону симуляции: невидимые страховки и автоматические субсидии сделали экономику менее понятной и ослабили последствия решений. Глубина, которую игрок не может прочитать или на которую не может повлиять, не автоматически улучшает игру.
 
 Источники: [дневник Economy 2.0](https://www.paradoxinteractive.com/games/cities-skylines-ii/news/dev-diary-economy-part-one), [экономика и производство](https://www.paradoxinteractive.com/games/cities-skylines-ii/features/economy-production), [жизненный путь жителей](https://www.paradoxinteractive.com/games/cities-skylines-ii/about).
+
+## Выделенная версия систем
+
+[[Экономика домохозяйств и компаний Cities Skylines II]] одновременно использует жителей, домохозяйства, компании, город и абстрактных инвесторов, не сводя их к единому типу субъекта.
