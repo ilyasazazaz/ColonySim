@@ -11,98 +11,77 @@
       "query": "tag:#подтверждено",
       "color": {
         "a": 1,
-        "rgb": 3066993
+        "rgb": 2278750
       }
     },
     {
       "query": "tag:#редактировано",
       "color": {
         "a": 1,
-        "rgb": 15844367
+        "rgb": 15381256
       }
     },
     {
       "query": "tag:#источник",
       "color": {
         "a": 1,
-        "rgb": 9807270
+        "rgb": 3718648
       }
     },
     {
       "query": "tag:#вопрос",
       "color": {
         "a": 1,
+        "rgb": 16007006
+      }
+    },
+    {
+      "query": "tag:#сеттинг",
+      "color": {
+        "a": 1,
         "rgb": 11032055
       }
     },
     {
-      "query": "tag:#сборка",
+      "query": "tag:#понятие",
       "color": {
         "a": 1,
-        "rgb": 9133302
+        "rgb": 6333946
       }
     },
     {
-      "query": "tag:#конфигурация",
+      "query": "tag:#семейство",
       "color": {
         "a": 1,
-        "rgb": 14239471
+        "rgb": 6514417
       }
     },
     {
-      "query": "tag:#система",
+      "query": "tag:#модель",
       "color": {
         "a": 1,
-        "rgb": 1752220
+        "rgb": 1357990
       }
     },
     {
-      "query": "tag:#механика",
+      "query": "tag:#процесс",
       "color": {
         "a": 1,
-        "rgb": 3900150
+        "rgb": 16347926
       }
     },
     {
-      "query": "tag:#сущность",
+      "query": "tag:#артефакт",
       "color": {
         "a": 1,
-        "rgb": 2278750
+        "rgb": 12024095
       }
     },
     {
-      "query": "tag:#роль",
+      "query": "tag:#эксперимент",
       "color": {
         "a": 1,
-        "rgb": 10079283
-      }
-    },
-    {
-      "query": "tag:#структура",
-      "color": {
-        "a": 1,
-        "rgb": 11369865
-      }
-    },
-    {
-      "query": "tag:#представление",
-      "color": {
-        "a": 1,
-        "rgb": 440020
-      }
-    },
-    {
-      "query": "tag:#преобразователь",
-      "color": {
-        "a": 1,
-        "rgb": 16096779
-      }
-    },
-    {
-      "query": "tag:#концепция",
-      "color": {
-        "a": 1,
-        "rgb": 15680580
+        "rgb": 15235577
       }
     },
     {
@@ -116,27 +95,20 @@
       "query": "tag:#ИИ",
       "color": {
         "a": 1,
-        "rgb": 8359053
-      }
-    },
-    {
-      "query": "-path:\"10 Узлы\" -path:\"00 Служебное\"",
-      "color": {
-        "a": 1,
         "rgb": 6583435
       }
     }
   ],
   "collapse-display": true,
   "showArrow": true,
-  "textFadeMultiplier": -0.6,
-  "nodeSizeMultiplier": 1.25,
-  "lineSizeMultiplier": 1.15,
+  "textFadeMultiplier": -0.25,
+  "nodeSizeMultiplier": 1.15,
+  "lineSizeMultiplier": 1,
   "collapse-forces": false,
-  "centerStrength": 0.0602926829268293,
-  "repelStrength": 9.57268292682927,
-  "linkStrength": 1,
-  "linkDistance": 302,
-  "scale": 0.7132754626224432,
+  "centerStrength": 0.15,
+  "repelStrength": 12,
+  "linkStrength": 0.85,
+  "linkDistance": 230,
+  "scale": 0.13168724279835425,
   "close": false
 }
