@@ -1,0 +1,20 @@
+{
+  "name": "ColonySim.PlayModeTests",
+  "rootNamespace": "ColonySim.Tests.PlayMode",
+  "references": [
+    "ColonySim.Domain",
+    "ColonySim.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

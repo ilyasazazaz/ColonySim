@@ -1,0 +1,21 @@
+{
+  "name": "ColonySim.EditModeTests",
+  "rootNamespace": "ColonySim.Tests.EditMode",
+  "references": [
+    "ColonySim.Domain"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
