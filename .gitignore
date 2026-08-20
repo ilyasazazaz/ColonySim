@@ -7,14 +7,16 @@ ObsidianVault/.trash/
 CLAUDE.local.md
 .codex-log/
 
-# Unity: генерируемые и локальные каталоги будущего проекта
-Product/Unity/Library/
-Product/Unity/Temp/
-Product/Unity/Obj/
-Product/Unity/Logs/
-Product/Unity/UserSettings/
-Product/Unity/Build/
-Product/Unity/Builds/
+# Unity: генерируемые и локальные каталоги проектов внутри Product
+Product/*/Library/
+Product/*/Temp/
+Product/*/Obj/
+Product/*/Logs/
+Product/*/UserSettings/
+Product/*/Build/
+Product/*/Builds/
+Product/*/MemoryCaptures/
+Product/*/Recordings/
 
 # IDE и ОС
 .idea/
