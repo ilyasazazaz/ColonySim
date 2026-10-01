@@ -1,3 +1,3 @@
-# ColonySim repository instructions
+# Инструкции ColonySim
 
-`AGENTS.md` is the canonical agent entry point. Before making non-trivial changes, read `AGENTS.md`, `AI/CONTEXT.md`, `AI/WORKFLOW.md`, and `AI/STATUS.md`. Do not duplicate or contradict those files here.
+Каноническая точка входа — AGENTS.md. Перед нетривиальной работой прочитайте его и указанные в нём файлы AI. Следуйте текущему процессу Obsidian; не восстанавливайте прежние цели из истории. Не создавайте здесь отдельную версию правил.
