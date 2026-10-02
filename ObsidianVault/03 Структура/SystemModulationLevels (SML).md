@@ -3,11 +3,24 @@ id: system-modulation-levels-структура
 created: 2026-10-02
 parents:
   - "[[02 Корректура/SystemModulationLevels (SML)]]"
-source_revision: "8B77DB7B00A73C7ED9D9FAD545949EE5A0FAD6F0C844B7055661D884DDF3666F"
+source_revision: "B677DC4183A3B568CF0E61F485AD449CE9FB98091E9242D03E59393E6BABD649"
 review_status: не проверено
 reviewed_at:
-rules_version: "2026-10-02T23:01:06+03:00"
+reviewed_revision:
+review_changed_at:
+review_history: []
+decision_status:
+tags: []
+rules_version: "2026-10-03T00:31:33+03:00"
 ---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
 
 ## Назначение SML
 
@@ -36,3 +49,14 @@ rules_version: "2026-10-02T23:01:06+03:00"
 - Материал сгруппирован по назначению, примеру, вариативности опыта и возможной организации систем.
 - Пример здоровья оформлен списком без изменения текста. В корректуру добавлены технические якоря `^b-001`–`^b-009`.
 - Обращений к ИИ в записи нет.
+
+<!-- review-properties:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {
+  context: target, component, container,
+  contextOverrides: {args: {mode: "properties"}}
+});
+```
+<!-- review-properties:end -->

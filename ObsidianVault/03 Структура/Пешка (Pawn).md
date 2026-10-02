@@ -3,11 +3,24 @@ id: пешка-pawn-структура
 created: 2026-10-02
 parents:
   - "[[02 Корректура/Пешка (Pawn)]]"
-source_revision: "68C4FB9316F6C28CED2C1A8EC8789F367FD5FC7832EE90A8E28E6B4D355648B9"
+source_revision: "4DDD5FE16BFF6BEC97C9EBEE444C57D1C69ECE3804361ED3AFAC7016C9DB0028"
 review_status: не проверено
 reviewed_at:
-rules_version: "2026-10-02T23:01:06+03:00"
+reviewed_revision:
+review_changed_at:
+review_history: []
+decision_status:
+tags: []
+rules_version: "2026-10-03T00:31:33+03:00"
 ---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
 
 ## Граница понятия
 
@@ -41,3 +54,14 @@ rules_version: "2026-10-02T23:01:06+03:00"
 
 - Текст сгруппирован по вопросу о понятии, уровням детализации, динамической генерации, альтернативному подходу и наблюдению. В корректуру добавлены якоря для уровней L0–L3.
 - Обращений к ИИ нет; пометка о неясном фрагменте сохранена.
+
+<!-- review-properties:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {
+  context: target, component, container,
+  contextOverrides: {args: {mode: "properties"}}
+});
+```
+<!-- review-properties:end -->

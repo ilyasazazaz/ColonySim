@@ -3,11 +3,24 @@ id: colonysim-структура
 created: 2026-10-02
 parents:
   - "[[02 Корректура/ColonySim]]"
-source_revision: "40F17FBF833FFD13CAA1B9F8292609639416310712DCAFFF44E9A2485BCF52DF"
+source_revision: "75589BBD4CB575842D2F30D5E148CE09A2C29B828E63F6AC57EE833FA1453B35"
 review_status: не проверено
 reviewed_at:
-rules_version: "2026-10-02T23:01:06+03:00"
+reviewed_revision:
+review_changed_at:
+review_history: []
+decision_status:
+tags: []
+rules_version: "2026-10-03T00:31:33+03:00"
 ---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
 
 ## Предварительный характер записи
 
@@ -75,3 +88,14 @@ rules_version: "2026-10-02T23:01:06+03:00"
 
 - Материал сгруппирован по масштабу симуляции, сущностям, генерации, хранению, вопросам моделирования и техническим ограничениям.
 - В корректуру добавлены точные якоря для ранее неадресуемых фрагментов; обращение об изучении моддинга выделено и не исполнялось.
+
+<!-- review-properties:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {
+  context: target, component, container,
+  contextOverrides: {args: {mode: "properties"}}
+});
+```
+<!-- review-properties:end -->
