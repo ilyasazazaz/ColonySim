@@ -14,8 +14,16 @@ decision_status: идея
 tags:
   - система/моделирование
   - система/производительность
-rules_version: "2026-10-02T23:01:06+03:00"
+rules_version: "2026-10-03T00:31:33+03:00"
 ---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
 
 > Черновик базы знаний. Определение и выводы ниже сформулированы ИИ по идее владельца; это не утверждённое техническое решение.
 
@@ -44,3 +52,13 @@ rules_version: "2026-10-02T23:01:06+03:00"
 | --- | --- |
 | [[03 Структура/SystemModulationLevels (SML)]] | `1079A0D17A85D3022BCC03B2BB87463A4254750F2D5155D9B12AC14EAAC0B34E` |
 | [[03 Структура/ColonySim]] | `D58A218BCEA264BE2221F7EBFF794C775B88C73644EF3BEFC10BA2DB3A6FA1C1` |
+\n+<!-- review-properties:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {
+  context: target, component, container,
+  contextOverrides: {args: {mode: "properties"}}
+});
+```
+<!-- review-properties:end -->

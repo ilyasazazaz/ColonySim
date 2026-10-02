@@ -13,8 +13,16 @@ decision_status: идея
 tags:
   - проект/концепция
   - система/моделирование
-rules_version: "2026-10-02T23:01:06+03:00"
+rules_version: "2026-10-03T00:31:33+03:00"
 ---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
 
 > Черновик базы знаний. Формулировки ниже — пересказ ИИ по предварительной записи владельца; они не являются утверждённым описанием продукта.
 
@@ -44,3 +52,13 @@ rules_version: "2026-10-02T23:01:06+03:00"
 ## Междисциплинарное направление
 
 [[03 Структура/ColonySim#^kb-colony-disciplines|Владелец]] хочет использовать в проекте подходы из баз данных, операционных систем и БЭВМ. Конкретные заимствования пока не определены.
+\n+<!-- review-properties:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {
+  context: target, component, container,
+  contextOverrides: {args: {mode: "properties"}}
+});
+```
+<!-- review-properties:end -->

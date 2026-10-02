@@ -13,8 +13,16 @@ decision_status: идея
 tags:
   - система/здоровье
   - система/моделирование
-rules_version: "2026-10-02T23:01:06+03:00"
+rules_version: "2026-10-03T00:31:33+03:00"
 ---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
 
 > Черновик базы знаний. Названия уровней — компактный пересказ ИИ; примеры и порядок происходят из записи владельца.
 
@@ -31,3 +39,13 @@ rules_version: "2026-10-02T23:01:06+03:00"
 ## Связи
 
 Это пример механизма [[Уровни глубины моделирования (SML)]]. Возможный способ организации разных реализаций вынесен в [[Организация систем SML]].
+\n+<!-- review-properties:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {
+  context: target, component, container,
+  contextOverrides: {args: {mode: "properties"}}
+});
+```
+<!-- review-properties:end -->
