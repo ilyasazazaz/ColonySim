@@ -3,10 +3,10 @@ id: фракция-корректура
 created: 2026-10-02
 parents:
   - "[[01 Сырьё/Фракция (Fraction)]]"
-source_revision: "3ECDB5D490376E659565277E63395627B9F960332190D789CBE861796960FF88"
+source_revision: "4B095949D62F3AC528A15A58EDA1AD5D9E1A28FD535C16A5CEE8D63D93DA9B24"
 review_status: не проверено
 reviewed_at:
-rules_version: 2026-10-02
+rules_version: "2026-10-02T23:01:06+03:00"
 ---
 
 В классическом подходе обладает локациями и пешками. Ну ил они имеют фракцию, как значение переменной фракции. ^b-001
