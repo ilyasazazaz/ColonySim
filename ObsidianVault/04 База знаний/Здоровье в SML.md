@@ -3,14 +3,17 @@ id: здоровье-в-sml
 created: 2026-10-02
 parents:
   - "[[03 Структура/SystemModulationLevels (SML)]]"
-source_revision: "CC54E382EB91EDB6D5B67E044DB891FDC832A972053BCB9E7F96A8FC1C94BBFB"
+source_revision: "1079A0D17A85D3022BCC03B2BB87463A4254750F2D5155D9B12AC14EAAC0B34E"
 review_status: не проверено
 reviewed_at:
+reviewed_revision:
+review_changed_at:
+review_history: []
 decision_status: идея
 tags:
   - система/здоровье
   - система/моделирование
-rules_version: 2026-10-02
+rules_version: "2026-10-02T23:01:06+03:00"
 ---
 
 > Черновик базы знаний. Названия уровней — компактный пересказ ИИ; примеры и порядок происходят из записи владельца.
