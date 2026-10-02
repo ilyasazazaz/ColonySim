@@ -14,6 +14,14 @@ tags: []
 rules_version: "2026-10-02T23:01:06+03:00"
 ---
 
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
+
 В классическом подходе фракция обладает локациями и пешками. Ну, ~~[[01 Сырьё/Фракция (Fraction)#^src-fraction-001|ил]]~~ [<u>или</u>](../01%20Сырьё/Фракция%20(Fraction).md#^src-fraction-001) они имеют фракцию как значение переменной «фракция». ^b-001
 
 Вопрос, зависящий от уровня ~~[[01 Сырьё/Фракция (Fraction)#^src-001|моддели]]~~ [<u>модели</u>](../01%20Сырьё/Фракция%20(Fraction).md#^src-001): может ли фракция управляться так, как это делает игрок? Приоритеты работ, эффективность ~~[[01 Сырьё/Фракция (Fraction)#^src-001|постройк]]~~ [<u>построек</u>](../01%20Сырьё/Фракция%20(Fraction).md#^src-001), разные тактики сражения и развития. При подобном усложнении механики может появиться разница между результатами ~~[[01 Сырьё/Фракция (Fraction)#^src-001|уаправления]]~~ [<u>управления</u>](../01%20Сырьё/Фракция%20(Fraction).md#^src-001) фракцией ИИ и ожидаемым результатом от статистического метода, из-за чего переход между ~~[[01 Сырьё/Фракция (Fraction)#^src-001|версияями]]~~ [<u>версиями</u>](../01%20Сырё/Фракция%20(Fraction).md#^src-001) будет сильно влиять на ~~[[01 Сырьё/Фракция (Fraction)#^src-001|балланс]]~~ [<u>баланс</u>](../01%20Сырьё/Фракция%20(Fraction).md#^src-001) сил. ^b-002
@@ -23,3 +31,11 @@ rules_version: "2026-10-02T23:01:06+03:00"
 ## Изменения
 
 - Исправлена очевидная орфографическая ошибка; остальная формулировка сохранена для следующего этапа.
+
+<!-- review-properties:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, { context: target, component, container, contextOverrides: {args: {mode: "properties"}} });
+```
+<!-- review-properties:end -->

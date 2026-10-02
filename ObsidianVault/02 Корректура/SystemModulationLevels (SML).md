@@ -14,6 +14,14 @@ tags: []
 rules_version: "2026-10-02T23:01:06+03:00"
 ---
 
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
+
 Игра ~~[[01 Сырьё/SystemModulationLevels (SML)#^src-001|расчитана]]~~ [<u>рассчитана</u>](../01%20Сырьё/SystemModulationLevels%20(SML).md#^src-001) для разных ~~[[01 Сырьё/SystemModulationLevels (SML)#^src-001|устройтв]]~~ [<u>устройств</u>](../01%20Сырьё/SystemModulationLevels%20(SML).md#^src-001) и с разной производительностью, а также разными потребностями пользователя. Надо ~~[[01 Сырьё/SystemModulationLevels (SML)#^src-001|обеспечит]]~~ [<u>обеспечить</u>](../01%20Сырьё/SystemModulationLevels%20(SML).md#^src-001) возможность урезать глубину моделирования не интересующих пользователя систем. Однако надо обеспечить, что при низких уровнях моделирования данные в общем походили на более высокие уровни. В идеале сделать возможность менять SML в процессе игры и получать валидные данные. ^b-001
 
 Пример - здоровье ^b-002
@@ -30,3 +38,11 @@ rules_version: "2026-10-02T23:01:06+03:00"
 ## Изменения
 
 - Исправлена очевидная орфографическая ошибка; остальные предположения и формулировки сохранены.
+
+<!-- review-properties:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, { context: target, component, container, contextOverrides: {args: {mode: "properties"}} });
+```
+<!-- review-properties:end -->
