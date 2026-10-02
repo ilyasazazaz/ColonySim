@@ -1,0 +1,48 @@
+---
+id: system-modulation-levels-корректура
+created: 2026-10-02
+parents:
+  - "[[01 Сырьё/SystemModulationLevels (SML)]]"
+source_revision: "74471BBA56970794BC74E4819B39DEAD5DA2D74881479F63B3B98BDB85136544"
+review_status: не проверено
+reviewed_at:
+reviewed_revision:
+review_changed_at:
+review_history: []
+decision_status:
+tags: []
+rules_version: "2026-10-02T23:01:06+03:00"
+---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
+
+Игра ~~[[01 Сырьё/SystemModulationLevels (SML)#^src-001|расчитана]]~~ [<u>рассчитана</u>](../01%20Сырьё/SystemModulationLevels%20(SML).md#^src-001) для разных ~~[[01 Сырьё/SystemModulationLevels (SML)#^src-001|устройтв]]~~ [<u>устройств</u>](../01%20Сырьё/SystemModulationLevels%20(SML).md#^src-001) и с разной производительностью, а также разными потребностями пользователя. Надо ~~[[01 Сырьё/SystemModulationLevels (SML)#^src-001|обеспечит]]~~ [<u>обеспечить</u>](../01%20Сырьё/SystemModulationLevels%20(SML).md#^src-001) возможность урезать глубину моделирования не интересующих пользователя систем. Однако надо обеспечить, что при низких уровнях моделирования данные в общем походили на более высокие уровни. В идеале сделать возможность менять SML в процессе игры и получать валидные данные. ^b-001
+
+Пример - здоровье ^b-002
+1 - HP параметр ^b-003
+2 - HP + эффекты (перелом ноги = - к движению) ^b-004
+3 - HP частей чела, эффекты на части тела ^b-005
+4 - Разные системы организма, HP заменено на процессы и циркуляцию ресурсов в теле ^b-006
+5 - Условно полная модель работы организма, с мышцами ,молочной кислотой, эффектами мозолей и тд ^b-007
+
+Кроме оптимизации разные SML могут дать разный опыт на разных сценариях, или вообще поменять жанр игры. ^b-008
+
+В таком подходе каждая система должна выступать как отдельный сервис с общим интерфейсом. При радикальной разнице в подходах реализации одной и той же системы на разных уровнях может понадобиться иерархия наследования абстрактных классов, и при сборке игровой сессии надо определить интерфейс работы системы. Но звучит почти нереалистичо ,да и не очень то и необходимо. Но проверить логированием можно. ^b-009
+
+## Изменения
+
+- Исправлена очевидная орфографическая ошибка; остальные предположения и формулировки сохранены.
+
+<!-- review-properties:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, { context: target, component, container, contextOverrides: {args: {mode: "properties"}} });
+```
+<!-- review-properties:end -->

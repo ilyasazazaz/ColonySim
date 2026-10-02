@@ -1,0 +1,45 @@
+
+const fs=require("node:fs"),path=require("node:path"),assert=require("node:assert/strict"),vm=require("node:vm");
+const root=process.cwd(),vault=path.join(root,"ObsidianVault");
+const helper=fs.readFileSync(path.join(root,"AI/review-buttons.js"),"utf8");
+const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+const definitions=helper.replace(/await renderPanel\(app, obsidian, context, component, container\);\s*$/,"return {canonical,digest,runReview,renderPanel};");
+(async()=>{
+const {canonical,digest,runReview,renderPanel}=await new AsyncFunction("crypto",definitions)(globalThis.crypto);
+const base=JSON.stringify({id:"test",review_status:"не проверено",reviewed_at:null,decision_status:"идея",other:"keep"});
+let text="---\n"+base+"\n---\n\nПроверяемая мысль. ^b-001\n",writes=0,notices=[],listeners=[];
+const file={path:"02 Корректура/test.md",extension:"md"};
+let race=false;
+const app={vault:{read:async f=>{assert.equal(f,file);return text},process:async(f,fn)=>{assert.equal(f,file);if(race)text+="Чужая правка\n";text=fn(text);writes++},on:(event,fn)=>{listeners.push(fn);return fn}}};
+const obsidian={parseYaml:JSON.parse,stringifyYaml:x=>JSON.stringify(x),Notice:class{constructor(s){notices.push(s)}}};
+const meta=()=>JSON.parse(text.match(/^---\n([\s\S]*?)\n---/)[1]);
+await runReview(app,obsidian,{file,args:{status:"согласовано"}});
+assert.equal(writes,1);assert.equal(meta().review_status,"согласовано");assert.equal(meta().decision_status,"идея");assert.equal(meta().other,"keep");assert.ok(/Z$/.test(meta().reviewed_at));assert.equal(meta().reviewed_revision,await digest(text));
+await runReview(app,obsidian,{file,args:{status:"согласовано"}});assert.equal(writes,1);
+let label={};await runReview(app,obsidian,{file,args:{mode:"display"}},{registerEvent(){}},{createEl:()=>label});
+assert.match(label.textContent,/согласовано/);assert.equal(writes,1);
+const approvedAt=meta().reviewed_at;text=text.replace("Проверяемая мысль.","Изменённая мысль.");
+await runReview(app,obsidian,{file,args:{mode:"display"}},{registerEvent(){}},{createEl:()=>label});assert.match(label.textContent,/изменён/);
+await runReview(app,obsidian,{file,args:{status:"нужны правки"}});assert.equal(meta().reviewed_at,approvedAt);assert.equal(meta().review_history.length,2);
+race=true;await assert.rejects(()=>runReview(app,obsidian,{file,args:{status:"согласовано"}}),/изменился/);assert.ok(text.endsWith("Чужая правка\n"));assert.equal(writes,2);race=false;
+await assert.rejects(()=>runReview(app,obsidian,{file:{path:"01 Сырьё/test.md",extension:"md"},args:{status:"согласовано"}}),/производной/);
+assert.equal(canonical("Текст. ^b-1\n\nЕщё."),canonical("Текст. ^b-2\nЕщё."));
+assert.notEqual(canonical("\x60\x60\x60\n x\n\x60\x60\x60"),canonical("\x60\x60\x60\n  x\n\x60\x60\x60"));
+assert.equal(canonical("Текст\n<!-- review-panel:start -->anything<!-- review-panel:end -->"),canonical("Текст"));
+assert.equal(canonical("Текст\n<!-- review-properties:start -->panel<!-- review-properties:end -->"),canonical("Текст"));
+assert.notEqual(canonical("Текст\n## Согласование\nА"),canonical("Текст\n## Согласование\nБ"));
+const elements=[];
+const element=()=>({textContent:"",createEl(tag,options={}){const e=element();e.tag=tag;e.textContent=options.text||"";elements.push(e);return e;}});
+const clicks=[];
+const componentMock={register(){},registerEvent(){},registerDomEvent(el,event,fn){clicks.push({el,event,fn});}};
+const beforeRender=writes;
+await renderPanel(app,obsidian,{file},componentMock,element());
+assert.equal(clicks.length,2);assert.equal(writes,beforeRender);
+await clicks[0].fn();assert.equal(meta().review_status,"согласовано");
+const afterClick=writes;
+await renderPanel(app,obsidian,{file,args:{mode:"properties"}},componentMock,element());
+assert.equal(writes,afterClick);assert.ok(elements.some(e=>e.tag==="pre" && e.textContent.includes("review_status")));
+console.log("PASS: panel render, click handlers, properties, no render writes.");
+console.log("PASS: approval, timestamp, idempotence, history, revision detection, concurrent edits, target isolation, technical anchors.");
+
+})().catch(error => { console.error(error); process.exitCode=1; });
