@@ -28,13 +28,13 @@ await engine.internal.executeFile(path, {context: target, component, container})
 
 ## Пример уровней
 
-[[03 Структура/SystemModulationLevels (SML)#^kb-sml-health|Здоровье]] используется как пример изменения глубины одной системы:
+[[03 Структура/SystemModulationLevels (SML)#^002|Здоровье]] используется как пример изменения глубины одной системы:
 
-1. [[03 Структура/SystemModulationLevels (SML)#^kb-sml-health-1|HP]] как единый параметр.
-2. [[03 Структура/SystemModulationLevels (SML)#^kb-sml-health-2|HP]] и эффекты, например влияние перелома ноги на движение.
-3. [[03 Структура/SystemModulationLevels (SML)#^kb-sml-health-3|HP]] частей тела и локальные эффекты.
-4. [[03 Структура/SystemModulationLevels (SML)#^kb-sml-health-4|Системы]] организма, процессы и циркуляция ресурсов вместо HP.
-5. [[03 Структура/SystemModulationLevels (SML)#^kb-sml-health-5|Условно]] полная модель организма, включая мышцы, молочную кислоту и мозоли.
+1. [[03 Структура/SystemModulationLevels (SML)#^003|HP]] как единый параметр.
+2. [[03 Структура/SystemModulationLevels (SML)#^004|HP]] и эффекты, например влияние перелома ноги на движение.
+3. [[03 Структура/SystemModulationLevels (SML)#^005|HP]] частей тела и локальные эффекты.
+4. [[03 Структура/SystemModulationLevels (SML)#^006|Системы]] организма, процессы и циркуляция ресурсов вместо HP.
+5. [[03 Структура/SystemModulationLevels (SML)#^007|Условно]] полная модель организма, включая мышцы, молочную кислоту и мозоли.
 
 ## Связи
 
