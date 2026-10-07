@@ -11,7 +11,7 @@ review_changed_at:
 review_history: []
 decision_status:
 tags: []
-rules_version: "2026-10-02T23:01:06+03:00"
+rules_version: "2026-10-03T01:08:41+03:00"
 ---
 
 <!-- review-panel:start -->
@@ -90,11 +90,9 @@ await engine.internal.executeFile(path, {context: target, component, container})
 ## Изменения
 
 - Исправлены явные орфографические, регистровые и пунктуационные ошибки; вопросы и оценочные формулировки автора сохранены.
+---
+<!-- review-feedback:start -->
+## Для ИИ
 
-<!-- review-properties:start -->
-```js-engine
-const path = "90 Служебное/review-buttons.js";
-const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
-await engine.internal.executeFile(path, { context: target, component, container, contextOverrides: {args: {mode: "properties"}} });
-```
-<!-- review-properties:end -->
+<!-- review-feedback:end -->
+---
