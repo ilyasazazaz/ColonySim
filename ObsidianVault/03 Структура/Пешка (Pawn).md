@@ -4,6 +4,8 @@ created: 2026-10-02
 parents:
   - "[[02 Корректура/Пешка (Pawn)]]"
 source_revision: "7BE15D0A22E5AB4A92E92E9C3C95CCD08D7F8B352408434C9C4571017969B9E2"
+agent_revision: "75be15fdfce06f7aa9bcfeb2564aecc8549cacdc"
+agent_revision_path: "03 Структура/Пешка (Pawn).md"
 review_status: не проверено
 reviewed_at:
 reviewed_revision:
