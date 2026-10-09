@@ -4,7 +4,7 @@ created: 2026-10-02
 parents:
   - "[[02 Корректура/ColonySim]]"
 source_revision: "BBE0E2DFB288071132A620B31CB3CFF3EC440191E2B290B57B49608DA6452AE3"
-agent_revision: "75be15fdfce06f7aa9bcfeb2564aecc8549cacdc"
+agent_revision: "d350aae04c8b0e2f88adce51a6b5ac828a5d1f18"
 agent_revision_path: "03 Структура/ColonySim.md"
 review_status: не проверено
 reviewed_at:

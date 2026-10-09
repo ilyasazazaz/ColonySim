@@ -4,7 +4,7 @@ created: 2026-10-02
 parents:
   - "[[02 Корректура/SystemModulationLevels (SML)]]"
 source_revision: "C078AA0972C8D90F5728934139112C92EE68A8BE5C71367E9B0253E75E418FBA"
-agent_revision: "75be15fdfce06f7aa9bcfeb2564aecc8549cacdc"
+agent_revision: "d350aae04c8b0e2f88adce51a6b5ac828a5d1f18"
 agent_revision_path: "03 Структура/SystemModulationLevels (SML).md"
 review_status: не проверено
 reviewed_at:
