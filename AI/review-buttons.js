@@ -1,135 +1,197 @@
-// Canonical source: AI/review-buttons.js. Deploy unchanged to 90 Служебное/review-buttons.js.
-function canonical(text) {
-  text = text.replace(/\r\n?/g, "\n").replace(/^---\n[\s\S]*?\n---(?:\n|$)/, "");
-  text = text.replace(/<!-- review-(?:panel|properties):start -->[\s\S]*?<!-- review-(?:panel|properties):end -->/g, "");
-  const kept = [];
-  let fence = null, service = false;
-  for (const line of text.split("\n")) {
-    const mark = line.match(/^\s*(\x60{3,}|~{3,})/);
-    if (fence) {
-      if (!service) kept.push(line);
-      if (mark && mark[1][0] === fence[0] && mark[1].length >= fence.length) fence = null;
+// Shared implementation. Master maintains AI source; deploy byte-identical vault copy.
+const FORMAT = "review-v3";
+const FIELDS = ["review_status", "reviewed_at", "reviewed_revision", "reviewed_revision_format",
+  "review_changed_at", "review_base_commit", "review_base_path"];
+const LABELS = [["Согласовать", "согласовано"], ["Исправлено мной", "исправлено мной"],
+  ["Нужны правки", "нужны правки"], ["Отменить действие", "undo"]];
+
+function readMetadata(text, obsidian) {
+  const match = text.match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  if (!match) throw new Error("В заметке нет YAML-свойств.");
+  const metadata = obsidian.parseYaml(match[1]);
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) throw new Error("Некорректные YAML-свойства.");
+  return {metadata, body: text.slice(match[0].length)};
+}
+// Only explicit, balanced service regions OUTSIDE author code fences are excluded.
+function scan(text) {
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  const records = [];
+  let fence = null, service = null;
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
+    const marker = !fence && line.match(/^\s*<!-- review-(panel|properties|feedback):(start|end) -->\s*$/);
+    if (marker) {
+      if (marker[2] === "start") {
+        if (service) throw new Error("Вложенные служебные блоки.");
+        service = marker[1];
+      } else {
+        if (service !== marker[1]) throw new Error("Непарные служебные границы.");
+        service = null;
+      }
+      records.push({line, index, marker: marker[1], edge: marker[2], service: true});
       continue;
     }
-    if (mark) { fence = mark[1]; if (!service) kept.push(line); continue; }
-    // Headings are content: never discard sections by their visible title.
-    if (service) continue;
-    kept.push(line.replace(/(?:^|\s)\^[A-Za-z0-9-]+(?=\s*$)/g, "")
+    const mark = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+    const isCode = !!fence || !!mark;
+    if (fence) {
+      if (mark && mark[1][0] === fence[0] && mark[1].length >= fence.length && !mark[2].trim()) fence = null;
+    } else if (mark) fence = mark[1];
+    records.push({line, index, code: isCode, service: !!service});
+  }
+  if (service) throw new Error("Служебный блок не закрыт.");
+  return records;
+}
+function canonical(text) {
+  const body = text.replace(/^\uFEFF?---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/, "");
+  const chunks = [], prose = [];
+  const flush = () => { if (prose.length) { const value = prose.join("\n").replace(/\s+/g, " ").trim(); if (value) chunks.push(value); prose.length = 0; } };
+  for (const record of scan(body)) {
+    if (record.service) continue;
+    if (record.code) { flush(); chunks.push(record.line); continue; }
+    prose.push(record.line.replace(/(?:^|\s)\^[A-Za-z0-9-]+\s*$/, "")
       .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target)
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"));
   }
-  // Preserve fenced code byte-for-byte after LF normalization; normalize prose only.
-  let result = "", prose = [], inCode = null;
-  const flush = () => { if (prose.length) { result += prose.join("\n").replace(/\s+/g, " ").trim() + "\n"; prose = []; } };
-  for (const line of kept) {
-    const mark = line.match(/^\s*(\x60{3,}|~{3,})/);
-    if (inCode) { result += line + "\n"; if (mark && mark[1][0] === inCode[0] && mark[1].length >= inCode.length) inCode = null; }
-    else if (mark) { flush(); inCode = mark[1]; result += line + "\n"; }
-    else prose.push(line);
-  }
   flush();
-  return result.trim();
+  return chunks.join("\n");
 }
 async function digest(text) {
   const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonical(text)));
   return Array.from(new Uint8Array(bytes), n => n.toString(16).padStart(2, "0")).join("");
 }
-function readMetadata(text, obsidian) {
-  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
-  if (!match) throw new Error("В заметке нет свойств YAML.");
-  const metadata = obsidian.parseYaml(match[1]);
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) throw new Error("Некорректные свойства заметки.");
-  return {metadata, body: text.slice(match[0].length)};
+function snapshot(metadata) {
+  return Object.fromEntries(FIELDS.filter(key => Object.hasOwn(metadata, key)).map(key => [key, metadata[key]]));
 }
-async function runReview(app, obsidian, context, component, container) {
+function sameState(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+function targetFile(context) {
   const file = context.file;
   if (!file || file.extension !== "md" || !/^(02 Корректура|03 Структура|04 База знаний)\//.test(file.path)) {
-    throw new Error("Кнопка должна находиться в производной заметке уровней 02–04.");
+    throw new Error("Кнопка доступна только в производной заметке 02–04.");
   }
-  if (context.args?.mode === "display") {
-    const label = container.createEl("p", {text: "Проверка согласования…"});
-    let generation = 0;
-    const refresh = async () => {
-      const run = ++generation;
-      try {
-        const text = await app.vault.read(file);
-        const {metadata: m} = readMetadata(text, obsidian);
-        const changed = m.review_status === "согласовано" && (m.reviewed_revision_format !== "review-v2" || m.reviewed_revision !== await digest(text));
-        if (run !== generation) return;
-        label.textContent = changed ? "Текст изменён после согласования — нужна повторная проверка."
-          : (m.review_status || "не проверено") + (m.reviewed_at ? " · последнее согласование: " + new Date(m.reviewed_at).toLocaleString("ru-RU") : "");
-      } catch (e) { if (run === generation) label.textContent = "Не удалось проверить согласование: " + e.message; }
-    };
-    await refresh();
-    component.registerEvent(app.vault.on("modify", changed => { if (changed.path === file.path) void refresh(); }));
-    return;
+  return file;
+}
+function ensureFeedback(body) {
+  const records = scan(body);
+  const starts = records.filter(r => r.marker === "feedback" && r.edge === "start");
+  if (starts.length > 1) throw new Error("В заметке несколько блоков «Для ИИ».");
+  if (starts.length) return body;
+  if (records.some(r => !r.code && !r.service && /^#{1,6}\s+Для ИИ\s*$/.test(r.line))) {
+    throw new Error("Существующий блок «Для ИИ» нужно обрамить review-feedback:start/end, сохранив комментарий.");
   }
-  const status = context.args?.status;
-  if (!["согласовано", "нужны правки"].includes(status)) throw new Error("Неизвестное действие кнопки.");
+  return body + (body.endsWith("\n") ? "\n" : "\n\n") +
+    "<!-- review-feedback:start -->\n---\n## Для ИИ\n\n\n---\n<!-- review-feedback:end -->\n";
+}
+async function revealFeedback(app, file) {
+  const leaf = app.workspace.getLeavesOfType("markdown").find(item => item.view?.file?.path === file.path) || app.workspace.getLeaf(false);
+  await leaf.openFile(file, {state: {mode: "source"}});
+  const records = scan(await app.vault.read(file));
+  const first = records.find(r => r.marker === "feedback" && r.edge === "start");
+  if (first && leaf.view?.editor) {
+    const editor = leaf.view.editor;
+    const line = Math.min(first.index + 4, editor.lineCount() - 1);
+    editor.setCursor({line, ch: 0});
+    editor.scrollIntoView({from: {line, ch: 0}, to: {line, ch: 0}}, true);
+    editor.focus();
+  }
+}
+async function runReview(app, obsidian, context) {
+  const file = targetFile(context);
+  const action = context.args?.status;
+  if (!LABELS.some(([, value]) => value === action)) throw new Error("Неизвестное действие.");
   const before = await app.vault.read(file);
-  const revision = await digest(before);
   const {metadata: m, body} = readMetadata(before, obsidian);
-  if (status === "согласовано" && m.review_status === status && m.reviewed_revision === revision && m.reviewed_revision_format === "review-v2") {
-    new obsidian.Notice("Эта редакция уже согласована.");
-    return;
-  }
+  if (m.review_history != null && !Array.isArray(m.review_history)) throw new Error("История имеет неизвестный формат; данные сохранены.");
+  let nextBody = body;
   const time = new Date().toISOString();
-  const previous = m.review_status || "не проверено";
-  if (m.review_history != null && !Array.isArray(m.review_history)) throw new Error("review_history должен быть списком; прежние данные сохранены.");
-  m.review_history = [...(m.review_history || []), time + " | " + previous + " → " + status + " | review-v2:" + revision];
-  m.review_status = status;
-  m.review_changed_at = time;
-  if (status === "согласовано") {
-    m.reviewed_at = time;
-    m.reviewed_revision = revision;
-    m.reviewed_revision_format = "review-v2";
+  const previous = snapshot(m);
+  const revision = await digest(before);
+  if (action === "undo") {
+    if (!m.review_undo) { new obsidian.Notice("Нет действия для отмены."); return; }
+    let undo;
+    try { undo = JSON.parse(m.review_undo); } catch { throw new Error("Некорректная запись отмены; данные сохранены."); }
+    if (undo?.version !== 1 || !undo.before || !undo.after || !sameState(previous, undo.after)) {
+      throw new Error("Состояние проверки изменено вне кнопки. Отмена не выполнена.");
+    }
+    for (const key of FIELDS) { delete m[key]; if (Object.hasOwn(undo.before, key)) m[key] = undo.before[key]; }
+    delete m.review_undo;
+    m.review_history = [...(m.review_history || []), `${time} | отмена ${undo.action} | ${FORMAT}:${revision}`];
+  } else {
+    if (action === "исправлено мной") {
+      if (typeof m.agent_revision !== "string" || !/^[a-f0-9]{40}$/i.test(m.agent_revision) ||
+          typeof m.agent_revision_path !== "string" || !m.agent_revision_path.endsWith(".md") ||
+          m.agent_revision_path.split(/[\\/]/).includes("..")) {
+        throw new Error("Нет достоверной Git-базы: нужны agent_revision (полный SHA) и agent_revision_path. Агент должен заполнить их по истории Git.");
+      }
+    }
+    if (action === "нужны правки") nextBody = ensureFeedback(body);
+    const reviewed = ["согласовано", "исправлено мной"].includes(action);
+    const sameBase = action !== "исправлено мной" || (m.review_base_commit === m.agent_revision && m.review_base_path === m.agent_revision_path);
+    if (reviewed && m.review_status === action && m.reviewed_revision_format === FORMAT && m.reviewed_revision === revision && sameBase) {
+      new obsidian.Notice("Эта редакция уже отмечена."); return;
+    }
+    if (action === "нужны правки" && m.review_status === action && nextBody === body) {
+      return {feedback: true, file};
+    }
+    m.review_status = action;
+    m.review_changed_at = time;
+    if (reviewed) { m.reviewed_at = time; m.reviewed_revision = revision; m.reviewed_revision_format = FORMAT; }
+    if (action === "исправлено мной") { m.review_base_commit = m.agent_revision; m.review_base_path = m.agent_revision_path; }
+    m.review_history = [...(m.review_history || []), `${time} | ${previous.review_status || "не проверено"} → ${action} | ${FORMAT}:${revision}`];
+    // Persist only review fields, not a copy of text, comments, or recursively nested history.
+    m.review_undo = JSON.stringify({version: 1, action, before: previous, after: snapshot(m)});
   }
-  const after = "---\n" + obsidian.stringifyYaml(m).trimEnd() + "\n---\n" + body;
+  const after = "---\n" + obsidian.stringifyYaml(m).trimEnd() + "\n---\n" + nextBody;
   await app.vault.process(file, current => {
-    if (current !== before) throw new Error("Файл изменился во время согласования. Перечитай его и нажми кнопку снова.");
+    if (current !== before) throw new Error("Файл изменился во время операции. Чужие правки сохранены; повторите действие.");
     return after;
   });
-  new obsidian.Notice(status === "согласовано" ? "Редакция согласована, дата сохранена." : "Отмечено: нужны правки.");
+  new obsidian.Notice(action === "undo" ? "Последнее действие отменено. Текст сохранён." : "Сохранено: " + action);
+  return {feedback: action === "нужны правки", file};
 }
 async function renderPanel(app, obsidian, context, component, container) {
+  const file = targetFile(context);
   if (!container) throw new Error("Панель требует контейнер заметки.");
-  const file = context.file;
-  if (!file || file.extension !== "md" || !/^(02 Корректура|03 Структура|04 База знаний)\//.test(file.path)) {
-    throw new Error("Панель доступна только в производной заметке.");
-  }
-  if (context.args?.mode === "properties") {
-    const details = container.createEl("details");
-    details.createEl("summary", {text: "Свойства"});
-    const body = details.createEl("pre");
-    let active = true;
-    component.register(() => { active = false; });
-    const refresh = async () => {
-      try {
-        const {metadata} = readMetadata(await app.vault.read(file), obsidian);
-        if (active) body.textContent = obsidian.stringifyYaml(metadata);
-      } catch (error) { if (active) body.textContent = error.message; }
-    };
-    component.registerEvent(app.vault.on("modify", changed => { if (changed.path === file.path) void refresh(); }));
-    await refresh();
-    return;
-  }
-  const row = container.createEl("div");
+  if (context.args?.mode === "properties") return; // Retired footer calls render nothing.
+  const row = container.createEl("div", {cls: "review-actions"});
+  row.style.display = "flex"; row.style.flexWrap = "wrap"; row.style.gap = "8px";
+  const label = container.createEl("p");
   const errorLabel = container.createEl("p");
+  errorLabel.setAttribute("role", "alert");
   const buttons = [];
-  let busy = false;
-  for (const [title, status] of [["Согласовать", "согласовано"], ["Нужны правки", "нужны правки"]]) {
+  let busy = false, disposed = false, generation = 0;
+  component.register(() => { disposed = true; generation++; });
+  const refresh = async () => {
+    const run = ++generation;
+    try {
+      const text = await app.vault.read(file);
+      const {metadata: m} = readMetadata(text, obsidian);
+      let message = m.review_status || "не проверено";
+      if (["согласовано", "исправлено мной"].includes(message)) {
+        if (m.reviewed_revision_format !== FORMAT) message += " · версия проверки устарела";
+        else if (m.reviewed_revision !== await digest(text)) message += " · текст изменён после проверки";
+      }
+      if (m.reviewed_at) message += " · " + new Date(m.reviewed_at).toLocaleString("ru-RU");
+      if (!disposed && run === generation) label.textContent = message;
+    } catch (error) { if (!disposed && run === generation) label.textContent = "Не удалось проверить статус: " + error.message; }
+  };
+  for (const [title, status] of LABELS) {
     const button = row.createEl("button", {text: title});
+    button.type = "button";
     buttons.push(button);
     component.registerDomEvent(button, "click", async () => {
-      if (busy) return;
-      busy = true;
-      buttons.forEach(item => { item.disabled = true; });
-      errorLabel.textContent = "";
-      try { await runReview(app, obsidian, {file, args: {status}}); }
+      if (busy || disposed) return;
+      busy = true; buttons.forEach(item => { item.disabled = true; }); errorLabel.textContent = "";
+      let result;
+      try { result = await runReview(app, obsidian, {file, args: {status}}); }
       catch (error) { errorLabel.textContent = "Не сохранено: " + error.message; }
-      finally { busy = false; buttons.forEach(item => { item.disabled = false; }); }
+      finally { busy = false; buttons.forEach(item => { item.disabled = false; }); await refresh(); }
+      if (result?.feedback) {
+        try { await revealFeedback(app, file); }
+        catch { new obsidian.Notice("Статус сохранён. Блок «Для ИИ» находится в конце заметки; открыть редактор автоматически не удалось."); }
+      }
     });
   }
-  await runReview(app, obsidian, {file, args: {mode: "display"}}, component, container);
+  component.registerEvent(app.vault.on("modify", changed => { if (changed.path === file.path) void refresh(); }));
+  await refresh();
 }
 await renderPanel(app, obsidian, context, component, container);
