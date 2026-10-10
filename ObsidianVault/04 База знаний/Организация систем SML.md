@@ -1,4 +1,6 @@
 ---
+cssclasses:
+  - review-clean-pilot
 id: организация-систем-sml
 created: 2026-10-02
 parents:
@@ -9,7 +11,7 @@ reviewed_at:
 reviewed_revision:
 review_changed_at:
 review_history: []
-agent_revision: "9e541610100a5ec6c759de9d3ec9a7927480130c"
+agent_revision: "69d7e73183155fa33c6c3859e81aa53b087e5581"
 agent_revision_path: "ObsidianVault/04 База знаний/Организация систем SML.md"
 decision_status: идея
 tags:
@@ -42,6 +44,7 @@ await engine.internal.executeFile(path, {context: target, component, container})
 Подход относится к механизму [[Уровни глубины моделирования (SML)]]; [[Здоровье в SML]] показывает систему, для которой уровни реализации заметно различаются.
 
 <!-- review-feedback:start -->
+
 ---
 ## Для ИИ
 

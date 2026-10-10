@@ -1,4 +1,6 @@
 ---
+cssclasses:
+  - review-clean-pilot
 id: концепция-colonysim
 created: 2026-10-03
 parents:
@@ -9,7 +11,7 @@ reviewed_at:
 reviewed_revision:
 review_changed_at:
 review_history: []
-agent_revision: "9e541610100a5ec6c759de9d3ec9a7927480130c"
+agent_revision: "69d7e73183155fa33c6c3859e81aa53b087e5581"
 agent_revision_path: "ObsidianVault/04 База знаний/Концепция ColonySim.md"
 decision_status: идея
 tags:
@@ -57,6 +59,7 @@ await engine.internal.executeFile(path, {context: target, component, container})
 [[03 Структура/ColonySim#^020|В]][[Концепция ColonySim|ладелец]] хочет использовать в проекте подходы из баз данных, операционных систем и БЭВМ. Конкретные заимствования пока не определены.
 
 <!-- review-feedback:start -->
+
 ---
 ## Для ИИ
 
