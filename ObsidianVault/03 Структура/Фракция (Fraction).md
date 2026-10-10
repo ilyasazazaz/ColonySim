@@ -4,7 +4,7 @@ created: 2026-10-02
 parents:
   - "[[02 Корректура/Фракция (Fraction)]]"
 source_revision: "4A30E808D1F884AC0FF72511B89ED6976061722E2A3D90579CE242A840BC01DF"
-agent_revision: "d350aae04c8b0e2f88adce51a6b5ac828a5d1f18"
+agent_revision: "045e155048c56fa9f678a50d2b8f82c6ac5173ed"
 agent_revision_path: "03 Структура/Фракция (Fraction).md"
 review_status: не проверено
 reviewed_at:
