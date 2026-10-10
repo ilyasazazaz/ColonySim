@@ -16,8 +16,16 @@ decision_status: идея
 tags:
   - система/моделирование
   - система/производительность
-rules_version: "2026-10-09T23:46:39+03:00"
+rules_version: "2026-10-10T00:11:51+03:00"
 ---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
 
 
 > Черновик базы знаний. Определение и выводы ниже сформулированы ИИ по идее владельца; это не утверждённое техническое решение.
@@ -45,12 +53,12 @@ rules_version: "2026-10-09T23:46:39+03:00"
 
 | Предшественник | SHA256 |
 | --- | --- |
-| [[03 Структура/SystemModulationLevels (SML)]] | `6A7034AC99A8787F724F74C68E8999773D6DF249B527988E502F75FAE73AEFA6` |
-| [[03 Структура/ColonySim]] | `CD5F5ED9436303D1D92B4609AAD2F21842BF228A86345065DAAAF5B530FBB055` |
+| [[03 Структура/SystemModulationLevels (SML)]] | `5FBC5C61B976E31616D41AC39FAC22DC4BBD3760B1015963DB9E2B6F0C5A0F24` |
+| [[03 Структура/ColonySim]] | `2509E47C24631A25B58DC365E7D8B1D23E8573FAE6FF0E4F384207F2F5BAEDBB` |
 
+<!-- review-feedback:start -->
 ---
-<!-- for-ai:start -->
 ## Для ИИ
 
-<!-- for-ai:end -->
 ---
+<!-- review-feedback:end -->

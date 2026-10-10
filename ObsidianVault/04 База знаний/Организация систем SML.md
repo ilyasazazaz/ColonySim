@@ -3,7 +3,7 @@ id: организация-систем-sml
 created: 2026-10-02
 parents:
   - "[[03 Структура/SystemModulationLevels (SML)]]"
-source_revision: "6A7034AC99A8787F724F74C68E8999773D6DF249B527988E502F75FAE73AEFA6"
+source_revision: "5FBC5C61B976E31616D41AC39FAC22DC4BBD3760B1015963DB9E2B6F0C5A0F24"
 review_status: не проверено
 reviewed_at:
 reviewed_revision:
@@ -15,8 +15,16 @@ decision_status: идея
 tags:
   - система/архитектура
   - система/моделирование
-rules_version: "2026-10-09T23:46:39+03:00"
+rules_version: "2026-10-10T00:11:51+03:00"
 ---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
 
 
 > Черновик базы знаний. Здесь сохранены и техническое предположение владельца, и его сомнение; предложение не является утверждённой архитектурой.
@@ -33,9 +41,9 @@ rules_version: "2026-10-09T23:46:39+03:00"
 
 Подход относится к механизму [[Уровни глубины моделирования (SML)]]; [[Здоровье в SML]] показывает систему, для которой уровни реализации заметно различаются.
 
+<!-- review-feedback:start -->
 ---
-<!-- for-ai:start -->
 ## Для ИИ
 
-<!-- for-ai:end -->
 ---
+<!-- review-feedback:end -->
