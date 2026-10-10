@@ -12,6 +12,8 @@ review_history: []
 decision_status:
 tags: []
 rules_version: "2026-10-03T01:08:41+03:00"
+cssclasses:
+  - review-clean-pilot
 ---
 
 <!-- review-panel:start -->
@@ -47,7 +49,11 @@ L4 — пешки игрока — уровень владения ~~[[01 Сыр
 - Фрагмент «после чего» сохранён с пометкой о неполноте: его продолжение неоднозначно.
 ---
 <!-- review-feedback:start -->
+
+---
 ## Для ИИ
 
+
+---
 <!-- review-feedback:end -->
 ---

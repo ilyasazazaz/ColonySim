@@ -12,6 +12,8 @@ review_history: []
 decision_status:
 tags: []
 rules_version: "2026-10-03T01:08:41+03:00"
+cssclasses:
+  - review-clean-pilot
 ---
 
 <!-- review-panel:start -->
@@ -33,7 +35,11 @@ await engine.internal.executeFile(path, {context: target, component, container})
 - Исправлена очевидная орфографическая ошибка; остальная формулировка сохранена для следующего этапа.
 ---
 <!-- review-feedback:start -->
+
+---
 ## Для ИИ
 
+
+---
 <!-- review-feedback:end -->
 ---
