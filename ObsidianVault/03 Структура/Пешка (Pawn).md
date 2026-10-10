@@ -13,8 +13,16 @@ review_changed_at:
 review_history: []
 decision_status:
 tags: []
-rules_version: "2026-10-09T23:46:39+03:00"
+rules_version: "2026-10-10T00:11:51+03:00"
 ---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
 
 ## Граница понятия
 
@@ -49,9 +57,11 @@ rules_version: "2026-10-09T23:46:39+03:00"
 - Текст сгруппирован по вопросу о понятии, уровням детализации, динамической генерации, альтернативному подходу и наблюдению. В корректуру добавлены якоря для уровней L0–L3.
 - Обращений к ИИ нет; пометка о неясном фрагменте сохранена.
 
+
+<!-- review-feedback:start -->
 ---
-<!-- for-ai:start -->
 ## Для ИИ
 
-<!-- for-ai:end -->
+
 ---
+<!-- review-feedback:end -->

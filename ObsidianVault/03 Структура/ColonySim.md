@@ -13,8 +13,16 @@ review_changed_at:
 review_history: []
 decision_status:
 tags: []
-rules_version: "2026-10-09T23:46:39+03:00"
+rules_version: "2026-10-10T00:11:51+03:00"
 ---
+
+<!-- review-panel:start -->
+```js-engine
+const path = "90 Служебное/review-buttons.js";
+const target = await engine.internal.getContextForMarkdownCallingJSFile(context.file.path, path);
+await engine.internal.executeFile(path, {context: target, component, container});
+```
+<!-- review-panel:end -->
 
 ## Предварительный характер записи
 
@@ -83,9 +91,11 @@ rules_version: "2026-10-09T23:46:39+03:00"
 - Материал сгруппирован по масштабу симуляции, сущностям, генерации, хранению, вопросам моделирования и техническим ограничениям.
 - В корректуру добавлены точные якоря для ранее неадресуемых фрагментов; обращение об изучении моддинга выделено и не исполнялось.
 
+
+<!-- review-feedback:start -->
 ---
-<!-- for-ai:start -->
 ## Для ИИ
 
-<!-- for-ai:end -->
+
 ---
+<!-- review-feedback:end -->
