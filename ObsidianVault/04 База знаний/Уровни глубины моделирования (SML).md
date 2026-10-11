@@ -6,19 +6,21 @@ created: 2026-10-02
 parents:
   - "[[03 Структура/SystemModulationLevels (SML)]]"
   - "[[03 Структура/ColonySim]]"
-source_revision: "см. раздел «Версии источников»"
-review_status: не проверено
+source_revision: см. раздел «Версии источников»
+review_status: нужны правки
 reviewed_at:
 reviewed_revision:
-review_changed_at:
-review_history: []
-agent_revision: "69d7e73183155fa33c6c3859e81aa53b087e5581"
-agent_revision_path: "ObsidianVault/04 База знаний/Уровни глубины моделирования (SML).md"
+review_changed_at: 2026-10-10T18:45:53.794Z
+review_history:
+  - 2026-10-10T18:45:53.794Z | не проверено → нужны правки | review-v3:741e5ef22df3a60bc3d0fe1d48e65e02ba9d8ca8c84efc6c7bfec20481e644fb
+agent_revision: 69d7e73183155fa33c6c3859e81aa53b087e5581
+agent_revision_path: ObsidianVault/04 База знаний/Уровни глубины моделирования (SML).md
 decision_status: идея
 tags:
   - система/моделирование
   - система/производительность
-rules_version: "2026-10-10T00:11:51+03:00"
+rules_version: 2026-10-10T00:11:51+03:00
+review_undo: '{"version":1,"action":"нужны правки","before":{"review_status":"не проверено","reviewed_at":null,"reviewed_revision":null,"review_changed_at":null},"after":{"review_status":"нужны правки","reviewed_at":null,"reviewed_revision":null,"review_changed_at":"2026-10-10T18:45:53.794Z"}}'
 ---
 
 <!-- review-panel:start -->
@@ -62,6 +64,7 @@ await engine.internal.executeFile(path, {context: target, component, container})
 
 ---
 ## Для ИИ
+Что ещё блять за версии источников? это лишний блок, убрать, или перенести в свойства.
 
 ---
 <!-- review-feedback:end -->
