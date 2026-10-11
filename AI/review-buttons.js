@@ -79,7 +79,7 @@ function ensureFeedback(body) {
     throw new Error("Существующий блок «Для ИИ» нужно обрамить review-feedback:start/end, сохранив комментарий.");
   }
   return body + (body.endsWith("\n") ? "\n" : "\n\n") +
-    "<!-- review-feedback:start -->\n---\n## Для ИИ\n\n\n---\n<!-- review-feedback:end -->\n";
+    "<!-- review-feedback:start -->\n\n---\n## Для ИИ\n\n\n---\n<!-- review-feedback:end -->\n";
 }
 async function revealFeedback(app, file) {
   const leaf = app.workspace.getLeavesOfType("markdown").find(item => item.view?.file?.path === file.path) || app.workspace.getLeaf(false);
@@ -88,7 +88,8 @@ async function revealFeedback(app, file) {
   const first = records.find(r => r.marker === "feedback" && r.edge === "start");
   if (first && leaf.view?.editor) {
     const editor = leaf.view.editor;
-    const line = Math.min(first.index + 4, editor.lineCount() - 1);
+    const heading = records.find(r => r.index > first.index && r.service && /^## Для ИИ\s*$/.test(r.line));
+    const line = Math.min((heading?.index ?? first.index) + 2, editor.lineCount() - 1);
     editor.setCursor({line, ch: 0});
     editor.scrollIntoView({from: {line, ch: 0}, to: {line, ch: 0}}, true);
     editor.focus();
