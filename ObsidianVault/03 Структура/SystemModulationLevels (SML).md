@@ -4,7 +4,7 @@ created: 2026-10-02
 parents:
   - "[[02 Корректура/SystemModulationLevels (SML)]]"
 source_revision: "C078AA0972C8D90F5728934139112C92EE68A8BE5C71367E9B0253E75E418FBA"
-agent_revision: "045e155048c56fa9f678a50d2b8f82c6ac5173ed"
+agent_revision: "1be06dc245432aa0e65ae742657c1271caa73f03"
 agent_revision_path: "ObsidianVault/03 Структура/SystemModulationLevels (SML).md"
 review_status: не проверено
 reviewed_at:
@@ -15,7 +15,7 @@ decision_status:
 tags: []
 cssclasses:
   - review-clean-pilot
-rules_version: "2026-10-10T00:11:51+03:00"
+rules_version: "2026-10-12T13:21:41+03:00"
 ---
 
 <!-- review-panel:start -->

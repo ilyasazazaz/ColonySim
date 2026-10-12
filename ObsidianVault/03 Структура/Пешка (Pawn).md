@@ -4,7 +4,7 @@ created: 2026-10-02
 parents:
   - "[[02 Корректура/Пешка (Pawn)]]"
 source_revision: "7BE15D0A22E5AB4A92E92E9C3C95CCD08D7F8B352408434C9C4571017969B9E2"
-agent_revision: "045e155048c56fa9f678a50d2b8f82c6ac5173ed"
+agent_revision: "1be06dc245432aa0e65ae742657c1271caa73f03"
 agent_revision_path: "ObsidianVault/03 Структура/Пешка (Pawn).md"
 review_status: не проверено
 reviewed_at:
@@ -15,7 +15,7 @@ decision_status:
 tags: []
 cssclasses:
   - review-clean-pilot
-rules_version: "2026-10-10T00:11:51+03:00"
+rules_version: "2026-10-12T13:21:41+03:00"
 ---
 
 <!-- review-panel:start -->
