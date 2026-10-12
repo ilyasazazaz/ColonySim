@@ -5,7 +5,7 @@ parents:
   - "[[02 Корректура/Пешка (Pawn)]]"
 source_revision: "7BE15D0A22E5AB4A92E92E9C3C95CCD08D7F8B352408434C9C4571017969B9E2"
 agent_revision: "045e155048c56fa9f678a50d2b8f82c6ac5173ed"
-agent_revision_path: "03 Структура/Пешка (Pawn).md"
+agent_revision_path: "ObsidianVault/03 Структура/Пешка (Pawn).md"
 review_status: не проверено
 reviewed_at:
 reviewed_revision:
@@ -13,6 +13,8 @@ review_changed_at:
 review_history: []
 decision_status:
 tags: []
+cssclasses:
+  - review-clean-pilot
 rules_version: "2026-10-10T00:11:51+03:00"
 ---
 
@@ -59,6 +61,7 @@ await engine.internal.executeFile(path, {context: target, component, container})
 
 
 <!-- review-feedback:start -->
+
 ---
 ## Для ИИ
 

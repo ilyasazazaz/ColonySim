@@ -5,7 +5,7 @@ parents:
   - "[[02 Корректура/Фракция (Fraction)]]"
 source_revision: "4A30E808D1F884AC0FF72511B89ED6976061722E2A3D90579CE242A840BC01DF"
 agent_revision: "045e155048c56fa9f678a50d2b8f82c6ac5173ed"
-agent_revision_path: "03 Структура/Фракция (Fraction).md"
+agent_revision_path: "ObsidianVault/03 Структура/Фракция (Fraction).md"
 review_status: не проверено
 reviewed_at:
 reviewed_revision:
@@ -13,6 +13,8 @@ review_changed_at:
 review_history: []
 decision_status:
 tags: []
+cssclasses:
+  - review-clean-pilot
 rules_version: "2026-10-10T00:11:51+03:00"
 ---
 
@@ -43,6 +45,7 @@ await engine.internal.executeFile(path, {context: target, component, container})
 
 
 <!-- review-feedback:start -->
+
 ---
 ## Для ИИ
 

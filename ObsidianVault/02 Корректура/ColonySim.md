@@ -11,7 +11,7 @@ review_changed_at:
 review_history: []
 decision_status:
 tags: []
-rules_version: "2026-10-11T22:22:01+03:00"
+rules_version: "2026-10-11T22:30:00+03:00"
 cssclasses:
   - review-clean-pilot
 ---
