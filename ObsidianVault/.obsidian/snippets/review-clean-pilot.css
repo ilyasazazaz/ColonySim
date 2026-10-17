@@ -1,0 +1,5 @@
+/* Pilot only: Сценарий запуска игры. Keep editor geometry/cursor stable.
+   HTML comments remain accessible in Source mode. No effect on other notes. */
+.markdown-source-view.mod-cm6.is-live-preview.review-clean-pilot .cm-comment {
+  visibility: hidden !important;
+}
