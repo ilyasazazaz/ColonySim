@@ -23,7 +23,7 @@
 
 ## Инструменты
 Общий JS: AI/review-buttons.js и синхронная vault-копия 90 Служебное/review-buttons.js; общий CSS review-clean-pilot. JS Engine установлен ранее; наличие и актуальность проверять по необходимости. Полный UI-тест не подтверждён.
-Средство YAML-проверки ранее установлено во временную папку %TEMP%/colonysim-yaml-check (PyYAML); наличие проверить. Python: C:/Users/ilyas/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe. В sys.path добавить указанную папку перед import yaml; отклонять повторные ключи отдельным конструктором SafeLoader. Если временная зависимость недоступна, сообщить мастеру; не считать regex полной проверкой YAML.
+YAML: постоянная локальная зависимость PyYAML 6.0.3 в C:/Users/ilyas/.local/share/colonysim/python. Python: C:/Users/ilyas/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe. Запуск: & <python> AI/check-frontmatter.py <пути заметок>. Скрипт проверяет только верхний YAML и отклоняет повторные ключи; тело Markdown не загружается как YAML. Временный %TEMP% больше не используется. При исчезновении зависимости сообщить мастеру; не передавать непроверенный пакет как готовый.
 
 
 ## Критик
