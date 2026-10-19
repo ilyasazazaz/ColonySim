@@ -20,7 +20,7 @@ decision_status:
 tags: []
 cssclasses:
   - review-clean-pilot
-rules_version: "2026-10-14T03:32:05+03:00"
+rules_version: "2026-10-19T21:41:33+03:00"
 aliases: []
 kind: "технология"
 ---
@@ -37,7 +37,7 @@ await engine.internal.executeFile(path, {context: target, component, container})
 
 ## [[03 Структура/ColonySim|ColonySim]]
 
-> [[03 Структура/ColonySim#^014|И]]спользование **Unity** нужно в основном для визуализации.
+> [[03 Структура/ColonySim#^014|И]]спользование **Unity** нужно в основном для визуализации. Вся логика моделирования должна быть вынесена в [[04 База знаний/Доменная модель|доменную область модели]].
 
 ## [[03 Структура/Что, зачем, откуда|Что, зачем, откуда]]
 
