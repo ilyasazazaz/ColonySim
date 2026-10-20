@@ -3,9 +3,9 @@ id: фракция-структура
 created: 2026-10-02
 parents:
   - "[[02 Корректура/Фракция (Fraction)]]"
-source_revision: "4A30E808D1F884AC0FF72511B89ED6976061722E2A3D90579CE242A840BC01DF"
+source_revision: "C0F52B56824D9F3CEBE4A87EAF1B65AB3F935DD0325722F4D955F9D09D286538"
 agent_revision: "1be06dc245432aa0e65ae742657c1271caa73f03"
-agent_revision_path: "ObsidianVault/03 Структура/Фракция (Fraction).md"
+agent_revision_path: "ObsidianVault/03 Структура/Фракция (Fraction) - 02.10.2026.md"
 review_status: не проверено
 reviewed_at:
 reviewed_revision:

@@ -3,9 +3,9 @@ id: system-modulation-levels-структура
 created: 2026-10-02
 parents:
   - "[[02 Корректура/SystemModulationLevels (SML)]]"
-source_revision: "C078AA0972C8D90F5728934139112C92EE68A8BE5C71367E9B0253E75E418FBA"
+source_revision: "262B7C5CAD065D60A2F829889C139EEBBE9EC8BEFD73D5CE7791A299D9A29DBB"
 agent_revision: "1be06dc245432aa0e65ae742657c1271caa73f03"
-agent_revision_path: "ObsidianVault/03 Структура/SystemModulationLevels (SML).md"
+agent_revision_path: "ObsidianVault/03 Структура/SystemModulationLevels (SML) - 02.10.2026.md"
 review_status: не проверено
 reviewed_at:
 reviewed_revision:

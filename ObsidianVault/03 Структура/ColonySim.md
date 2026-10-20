@@ -3,9 +3,9 @@ id: colonysim-структура
 created: 2026-10-02
 parents:
   - "[[02 Корректура/ColonySim]]"
-source_revision: "BBE0E2DFB288071132A620B31CB3CFF3EC440191E2B290B57B49608DA6452AE3"
+source_revision: "6597493805430F89FB185D4071279E1693F2633F913E2F1BF8C55053BE991691"
 agent_revision: "1be06dc245432aa0e65ae742657c1271caa73f03"
-agent_revision_path: "ObsidianVault/03 Структура/ColonySim.md"
+agent_revision_path: "ObsidianVault/03 Структура/ColonySim - 02.10.2026.md"
 review_status: не проверено
 reviewed_at:
 reviewed_revision:

@@ -3,9 +3,9 @@ id: пешка-pawn-структура
 created: 2026-10-02
 parents:
   - "[[02 Корректура/Пешка (Pawn)]]"
-source_revision: "7BE15D0A22E5AB4A92E92E9C3C95CCD08D7F8B352408434C9C4571017969B9E2"
+source_revision: "670723D61AA11949B2B0CD59EF75F4C90D85BA0A32B72BC97AC94628DB6E0587"
 agent_revision: "1be06dc245432aa0e65ae742657c1271caa73f03"
-agent_revision_path: "ObsidianVault/03 Структура/Пешка (Pawn).md"
+agent_revision_path: "ObsidianVault/03 Структура/Пешка (Pawn) - 02.10.2026.md"
 review_status: не проверено
 reviewed_at:
 reviewed_revision:
