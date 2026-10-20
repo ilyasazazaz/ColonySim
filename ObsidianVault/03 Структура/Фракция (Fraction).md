@@ -4,8 +4,8 @@ created: 2026-10-02
 parents:
   - "[[02 Корректура/Фракция (Fraction)]]"
 source_revision: "C0F52B56824D9F3CEBE4A87EAF1B65AB3F935DD0325722F4D955F9D09D286538"
-agent_revision: "1be06dc245432aa0e65ae742657c1271caa73f03"
-agent_revision_path: "ObsidianVault/03 Структура/Фракция (Fraction) - 02.10.2026.md"
+agent_revision: "c3b896b3e95a9ea02829c1739d7997f9b0bb9aa8"
+agent_revision_path: "ObsidianVault/03 Структура/Фракция (Fraction).md"
 review_status: не проверено
 reviewed_at:
 reviewed_revision:
