@@ -15,6 +15,16 @@ decision_status:
 tags: []
 cssclasses:
   - review-clean-pilot
+ai_requests:
+  - id: q019
+    anchor: "^019"
+    owner: requests
+    status: выполнено
+    revision: "6E891A80128559564CC56FF1C6382C0798A561FF0547AAFF68CB74CA3168CB75"
+    result:
+      - "[[03 Структура/ИИ. Интеграция моддинга в симуляцию]]"
+    commit: "3624e4c"
+    completed_at: "2026-10-20T14:17:00+03:00"
 rules_version: "2026-10-12T13:21:41+03:00"
 ---
 
@@ -91,6 +101,8 @@ await engine.internal.executeFile(path, {context: target, component, container})
 ## Обращения к ИИ из записи
 
 [[02 Корректура/ColonySim#^018|Р]]азнюхать, как в крупных проектах осуществлена интеграция [[04 База знаний/Моддинг|моддинга]]. ^019
+
+ИИ: выполнено — [[03 Структура/ИИ. Интеграция моддинга в симуляцию]].
 
 ## Междисциплинарный контекст
 
