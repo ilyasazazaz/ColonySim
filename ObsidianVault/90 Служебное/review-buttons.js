@@ -65,7 +65,7 @@ function snapshot(metadata) {
 function sameState(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 function targetFile(context) {
   const file = context.file;
-  if (!file || file.extension !== "md" || !/^(02 Корректура|03 Структура|04 База знаний)\//.test(file.path)) {
+  if (!file || file.extension !== "md" || !/^(02 Корректура|03 Структура|04 База знаний|04 Справочник упоминаний)\//.test(file.path)) {
     throw new Error("Кнопка доступна только в производной заметке 02–04.");
   }
   return file;
