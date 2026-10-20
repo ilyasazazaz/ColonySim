@@ -5,6 +5,7 @@
 - [AGENT-1.md](AGENT-1.md): сырьё и корректура.
 - [AGENT-2.md](AGENT-2.md): структура.
 - [AGENT-3.md](AGENT-3.md): упоминания и тематические ссылки.
+- [REQUESTS.md](REQUESTS.md): выполнение и маршрутизация обращений владельца.
 - [CRITIC.md](CRITIC.md): критика и подготовка запросов мастеру, без редактирования.
 - [MASTER.md](MASTER.md): настройка и контроль процесса.
 - [NOTE-TEMPLATE.md](NOTE-TEMPLATE.md): единая оболочка 02–04.
