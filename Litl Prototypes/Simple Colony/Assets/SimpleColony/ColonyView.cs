@@ -15,7 +15,26 @@ namespace SimpleColony
         void Box(Rect r, Color c) { GUI.color = c; GUI.DrawTexture(r, Texture2D.whiteTexture); GUI.color = Color.white; }
         void Dot(Vector2 v, float r, Color c) { GUI.color = c; GUI.DrawTexture(new Rect(v.x - r, v.y - r, r * 2, r * 2), disc); GUI.color = Color.white; }
         Vector2 Pos(int i) { return new Vector2(65 + world.Nodes[i].X * 133, 160 + world.Nodes[i].Y * 112); }
-        void Line(Vector2 a, Vector2 b, Color c, float width = 2) { var old = GUI.matrix; GUIUtility.RotateAroundPivot(Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg, a); Box(new Rect(a.x, a.y - width / 2, Vector2.Distance(a, b), width), c); GUI.matrix = old; }
+        void Line(Vector2 a, Vector2 b, Color c, float width = 2)
+        {
+            var canvasMatrix = GUI.matrix;
+            var direction = b - a;
+            // Apply the road's local transform before the canvas scale and offset.
+            // RotateAroundPivot mixes the pivot with the already transformed GUI space.
+            var roadMatrix = Matrix4x4.TRS(
+                new Vector3(a.x, a.y, 0),
+                Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg),
+                Vector3.one);
+            try
+            {
+                GUI.matrix = canvasMatrix * roadMatrix;
+                Box(new Rect(0, -width / 2, direction.magnitude, width), c);
+            }
+            finally
+            {
+                GUI.matrix = canvasMatrix;
+            }
+        }
         bool Btn(float x, float y, float w, string s) { return GUI.Button(new Rect(x, y, w, 38), s, button); }
         void OnGUI()
         {
