@@ -1,91 +1,386 @@
+using System;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+
 namespace SimpleColony
 {
     public sealed class ColonyView : MonoBehaviour
     {
-        World world; Texture2D disc; int selected = 14, role, speed = 1; float accumulator, tickMs; GUIStyle title, label, small, button;
-        const int RoadWidth = 840, RoadHeight = 660;
-        Texture2D roads;
-        World roadWorld;
-        uint roadVisibility;
-        readonly string[] names = { "Собиратель", "Защитник", "Разведчик", "Исследователь", "Строитель", "Снабженец", "Медик", "Стабилизатор" };
-        readonly string[] resources = { "Питание", "Угроза", "Разведка", "Знание", "Материя", "Заряд", "Лечение", "Стабильность" };
-        readonly Color[] colors = { new Color(1, .78f, .24f), new Color(1, .32f, .37f), new Color(.4f, .87f, .51f), new Color(.37f, .58f, 1), new Color(1, .51f, .25f), new Color(.25f, .85f, .91f), new Color(.88f, .93f, 1), new Color(.75f, .48f, 1) };
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] static void Boot() { if (FindAnyObjectByType<ColonyView>() == null) new GameObject("Simple Colony").AddComponent<ColonyView>(); }
-        void Awake() { world = new World(4271); Application.targetFrameRate = 60; Screen.orientation = ScreenOrientation.LandscapeLeft; disc = new Texture2D(64, 64); for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++) { float d = Vector2.Distance(new Vector2(x, y), new Vector2(31.5f, 31.5f)); disc.SetPixel(x, y, new Color(1, 1, 1, Mathf.Clamp01(31.5f - d))); } disc.Apply(); if (Camera.main) { Camera.main.orthographic = true; Camera.main.backgroundColor = new Color(.035f, .055f, .08f); Camera.main.clearFlags = CameraClearFlags.SolidColor; } }
-        void Update() { accumulator += Time.unscaledDeltaTime * speed; int steps = 0; while (accumulator >= .1f && steps++ < 30) { var timer = System.Diagnostics.Stopwatch.StartNew(); world.Step(); tickMs = (float)timer.Elapsed.TotalMilliseconds; accumulator -= .1f; } }
-        void OnDestroy() { if (disc) Destroy(disc); if (roads) Destroy(roads); }
-        void InitStyles() { if (title != null) return; title = new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold }; label = new GUIStyle(GUI.skin.label) { fontSize = 17 }; small = new GUIStyle(GUI.skin.label) { fontSize = 13 }; button = new GUIStyle(GUI.skin.button) { fontSize = 16 }; }
-        void Box(Rect r, Color c) { GUI.color = c; GUI.DrawTexture(r, Texture2D.whiteTexture); GUI.color = Color.white; }
-        void Dot(Vector2 v, float r, Color c) { GUI.color = c; GUI.DrawTexture(new Rect(v.x - r, v.y - r, r * 2, r * 2), disc); GUI.color = Color.white; }
-        Vector2 Pos(int i) { return new Vector2(65 + world.Nodes[i].X * 133, 160 + world.Nodes[i].Y * 112); }
-        void DrawRoads()
-        {
-            if (Event.current.type != EventType.Repaint) return;
-            uint visibility = 0;
-            for (int i = 0; i < world.Nodes.Length; i++)
-                if (world.Nodes[i].Known) visibility |= 1u << i;
+        World world;
+        [SerializeField] GameObject generatedInterface, generatedInput;
+        [SerializeField] int sessionSeed = 4271;
+        MapGraphic map;
+        RectTransform safeArea;
+        RectTransform mapViewport;
+        RectTransform topPanel, selectionPanel, colonyControlsRect;
+        CanvasScaler canvasScaler;
+        bool portraitLayout, layoutReady;
+        Text caption, description, details, stocks, diagnosticText, feedback, speedText, recruitRoleText;
+        DescriptionPopup descriptionPopup;
+        readonly RuntimeStatistics statistics = new RuntimeStatistics();
+        readonly System.Collections.Generic.List<Button> researchButtons = new System.Collections.Generic.List<Button>();
+        readonly System.Collections.Generic.List<Text> researchPrices = new System.Collections.Generic.List<Text>();
+        Image recruitPortrait;
+        UiIcon playIcon;
+        Image portrait;
+        GameObject help, diagnostics, pawnActions, nodeActions, coreActions, recruitment, research, workforce;
+        Button convert, accessButton, recruitButton;
+        Font font;
+        Sprite disc;
+        Texture2D discTexture;
+        float accumulator, refresh, tickMs;
+        bool paused;
+        // Zero selects unrestricted simulation within the per-frame CPU budget.
+        static readonly int[] Speeds = { 1, 2, 5, 10, 25, 50, 100, 0 };
+        int speedIndex;
+        Profession recruitRole = Profession.Unemployed;
+        Profession chosenRole;
+        public int SelectedNode { get; private set; }
+        public int SelectedPawn { get; private set; } = -1;
+        public bool MapInteractive => map != null && map.isActiveAndEnabled;
+        static readonly string[] Names = { "Собиратель", "Защитник", "Разведчик", "Исследователь", "Строитель", "Снабженец", "Медик", "Стабилизатор", "Безработный" };
+        static readonly string[] Descriptions = { "Доставляет питание", "Подавляет угрозы", "Открывает территории", "Получает знания", "Доставляет материю", "Доставляет заряд", "Доставляет лекарства", "Защищает соседние узлы", "Ожидает назначения профессии" };
+        static readonly string[] ResourceNames = { "Питание", "Знания", "Материя", "Заряд", "Лекарства", "Стабильность" };
+        static readonly string[] States = { "Ожидает работу", "В пути", "Работает", "Восстанавливается", "Погиб", "На посту" };
 
-            // Cache a single unrotated image in the same canvas coordinates as nodes.
-            // Rebuild only when the map or its discovered territories change.
-            if (!roads || roadWorld != world || roadVisibility != visibility)
-            {
-                if (!roads)
-                    roads = new Texture2D(RoadWidth, RoadHeight, TextureFormat.RGBA32, false)
-                    { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
-                var pixels = new Color32[RoadWidth * RoadHeight];
-                for (int i = 0; i < world.Nodes.Length; i++)
-                    foreach (int neighbor in world.Nodes[i].Links)
-                        if (neighbor > i && (world.Nodes[i].Known || world.Nodes[neighbor].Known))
-                            RasterRoad(pixels, Pos(i), Pos(neighbor));
-                roads.SetPixels32(pixels);
-                roads.Apply(false);
-                roadWorld = world;
-                roadVisibility = visibility;
-            }
-            GUI.DrawTexture(new Rect(0, 0, RoadWidth, RoadHeight), roads);
-        }
-
-        static void RasterRoad(Color32[] pixels, Vector2 a, Vector2 b)
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void Boot()
+        { if (FindAnyObjectByType<ColonyView>() == null) new GameObject("Colony").AddComponent<ColonyView>(); }
+        void Awake()
+        { InitializeSession(); }
+        void OnEnable()
         {
-            var direction = b - a;
-            float lengthSquared = direction.sqrMagnitude;
-            if (lengthSquared < .001f) return;
-            int left = Mathf.Max(0, Mathf.FloorToInt(Mathf.Min(a.x, b.x) - 2));
-            int right = Mathf.Min(RoadWidth - 1, Mathf.CeilToInt(Mathf.Max(a.x, b.x) + 2));
-            int top = Mathf.Max(0, Mathf.FloorToInt(Mathf.Min(a.y, b.y) - 2));
-            int bottom = Mathf.Min(RoadHeight - 1, Mathf.CeilToInt(Mathf.Max(a.y, b.y) + 2));
-            for (int y = top; y <= bottom; y++)
-                for (int x = left; x <= right; x++)
+            if (Application.isPlaying && world == null) InitializeSession();
+        }
+        void InitializeSession()
+        {
+            // Runtime callbacks and the non-serialized model need rebuilding after a script reload.
+            var previousInterface = generatedInterface != null ? generatedInterface : transform.Find("Interface")?.gameObject;
+            var previousInput = generatedInput != null ? generatedInput : transform.Find("Input")?.gameObject;
+            if (previousInterface != null) { previousInterface.SetActive(false); Destroy(previousInterface); }
+            if (previousInput != null) { previousInput.SetActive(false); Destroy(previousInput); }
+            researchButtons.Clear();
+            researchPrices.Clear();
+            if (disc != null) Destroy(disc);
+            if (discTexture != null) Destroy(discTexture);
+            layoutReady = false;
+            Application.targetFrameRate = 60;
+            Screen.autorotateToPortrait = true;
+            Screen.autorotateToPortraitUpsideDown = true;
+            Screen.autorotateToLandscapeLeft = true;
+            Screen.autorotateToLandscapeRight = true;
+            Screen.orientation = ScreenOrientation.AutoRotation;
+            font = UnityEngine.Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            CreateDisc(); BuildInterface(); Restart(sessionSeed);
+        }
+        void CreateDisc()
+        {
+            discTexture = new Texture2D(64, 64, TextureFormat.RGBA32, false);
+            for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++)
+                discTexture.SetPixel(x, y, new Color(1, 1, 1, Mathf.Clamp01(31.5f - Vector2.Distance(new Vector2(x, y), new Vector2(31.5f, 31.5f)))));
+            discTexture.Apply(); disc = Sprite.Create(discTexture, new Rect(0, 0, 64, 64), new Vector2(.5f, .5f));
+        }
+        void BuildInterface()
+        {
+            var canvasObject = new GameObject("Interface", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            generatedInterface = canvasObject;
+            canvasObject.transform.SetParent(transform, false);
+            canvasObject.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+            var scaler = canvasObject.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvasScaler = scaler;
+            scaler.referenceResolution = new Vector2(1000, 650); scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
+            if (FindAnyObjectByType<EventSystem>() == null)
             {
-                var sample = new Vector2(x + .5f, y + .5f);
-                float t = Mathf.Clamp01(Vector2.Dot(sample - a, direction) / lengthSquared);
-                float distance = Vector2.Distance(sample, a + direction * t);
-                byte alpha = (byte)(Mathf.Clamp01(1.75f - distance) * 255);
-                int index = (RoadHeight - 1 - y) * RoadWidth + x;
-                if (alpha > pixels[index].a) pixels[index] = new Color32(60, 92, 110, alpha);
+                var events = new GameObject("Input", typeof(EventSystem), typeof(InputSystemUIInputModule));
+                generatedInput = events;
+                events.transform.SetParent(transform, false);
+            }
+            var background = Panel(canvasObject.transform, "Background", new Color(.025f, .04f, .06f)); Stretch(background);
+            safeArea = Panel(background, "Safe area", Color.clear); Stretch(safeArea);
+            var popupObject = new GameObject("Description popup", typeof(RectTransform), typeof(DescriptionPopup));
+            popupObject.transform.SetParent(safeArea, false);
+            descriptionPopup = popupObject.GetComponent<DescriptionPopup>(); descriptionPopup.Initialize(font);
+            var viewport = new GameObject("Map viewport", typeof(RectTransform), typeof(RectMask2D));
+            viewport.transform.SetParent(safeArea, false);
+            mapViewport = (RectTransform)viewport.transform;
+            Stretch(mapViewport); mapViewport.offsetMin = new Vector2(88, 140); mapViewport.offsetMax = new Vector2(0, -64);
+            var mapObject = new GameObject("Map", typeof(RectTransform), typeof(CanvasRenderer), typeof(MapGraphic));
+            mapObject.transform.SetParent(viewport.transform, false);
+            map = mapObject.GetComponent<MapGraphic>(); map.Owner = this;
+            Stretch((RectTransform)mapObject.transform);
+            var top = Panel(safeArea, "Session", new Color(.06f, .085f, .11f)); Anchor(top, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -64), Vector2.zero);
+            topPanel = top;
+            playIcon = Button(top, "▶", 12, -7, 54, 50, () => { paused = !paused; Refresh(); }).GetComponentInChildren<UiIcon>();
+            speedText = Button(top, "×1", 74, -7, 64, 50, () => { speedIndex = (speedIndex + 1) % Speeds.Length; accumulator = 0; Refresh(); }, holdText: "Скорость симуляции. MAX — максимально возможная в пределах времени кадра.").GetComponentInChildren<Text>();
+            Button(top, "↻", 146, -7, 54, 50, () => Restart(world.Seed + 1));
+            stocks = Label(top, "", 218, -9, 530, 45, 16);
+            Button(top, "?", -118, -7, 48, 50, () => TogglePanel(help), true);
+            Button(top, "…", -60, -7, 48, 50, () => TogglePanel(diagnostics), true);
+            var bottom = Panel(safeArea, "Selection", new Color(.06f, .085f, .11f)); Anchor(bottom, Vector2.zero, new Vector2(1, 0), Vector2.zero, new Vector2(0, 140));
+            selectionPanel = bottom;
+            portrait = Panel(bottom, "Portrait", Color.white).GetComponent<Image>(); portrait.sprite = disc; Place(portrait.rectTransform, 70, -14, 56, 56);
+            caption = Label(bottom, "", 8, -82, 180, 42, 17); caption.alignment = TextAnchor.UpperCenter;
+            description = Label(bottom, "", 210, -14, 600, 28, 19);
+            details = Label(bottom, "", 210, -44, 700, 30, 16);
+            pawnActions = new GameObject("Profession actions", typeof(RectTransform)); pawnActions.transform.SetParent(bottom, false); Stretch((RectTransform)pawnActions.transform);
+            Button(pawnActions.transform, "‹", 12, -18, 46, 48, () => ChangeRole(-1));
+            Button(pawnActions.transform, "›", 138, -18, 46, 48, () => ChangeRole(1));
+            convert = Button(pawnActions.transform, "Преобразовать", 210, -76, 180, 48, Convert);
+            nodeActions = new GameObject("Territory actions", typeof(RectTransform)); nodeActions.transform.SetParent(bottom, false); Stretch((RectTransform)nodeActions.transform);
+            accessButton = Button(nodeActions.transform, "Доступ", 210, -76, 180, 48, () => { world.ToggleAccess(SelectedNode); Refresh(); });
+            Button(bottom, "⌂", -64, -14, 50, 48, () => { map.Pan = Vector2.zero; map.Zoom = Screen.height > Screen.width ? 40 : 60; SelectNode(World.Home); }, true);
+            feedback = Label(bottom, "", 410, -88, 500, 30, 16);
+            coreActions = new GameObject("Colony controls", typeof(RectTransform)); coreActions.transform.SetParent(safeArea, false);
+            var colonyRect = (RectTransform)coreActions.transform;
+            colonyControlsRect = colonyRect;
+            colonyRect.anchorMin = colonyRect.anchorMax = new Vector2(0, 1); colonyRect.pivot = new Vector2(0, 1);
+            colonyRect.anchoredPosition = new Vector2(12, -80); colonyRect.sizeDelta = new Vector2(64, 208);
+            Button(coreActions.transform, "Найм", 0, 0, 64, 56, () => TogglePanel(recruitment), iconSymbol: "hire", holdText: "Найм пешек. Выберите профессию. Стоимость — 25 питания.");
+            Button(coreActions.transform, "Исследования", 0, -72, 64, 56, () => TogglePanel(research), iconSymbol: "research", holdText: "Исследования колонии. Покупаются за знания. Удерживайте значок улучшения, чтобы прочитать его эффект.");
+            Button(coreActions.transform, "Профессии", 0, -144, 64, 56, () => TogglePanel(workforce), iconSymbol: "pawn", holdText: "Численность профессий. +1 и +3 назначают безработных, −1 освобождает работника. Смена выполняется на ядре; счётчики учитывают назначенные переводы.");
+            help = new GameObject("Help", typeof(RectTransform)); help.AddComponent<HelpPanel>().Initialize(safeArea, font, descriptionPopup); help.SetActive(false);
+            diagnostics = Overlay("Diagnostics", ""); diagnosticText = diagnostics.transform.Find("Body").GetComponent<Text>();
+            recruitment = Overlay("Recruitment", ""); recruitRoleText = recruitment.transform.Find("Body").GetComponent<Text>();
+            recruitPortrait = Panel(recruitment.transform, "Portrait", Color.white).GetComponent<Image>(); recruitPortrait.sprite = disc; Place(recruitPortrait.rectTransform, 175, -115, 56, 56);
+            Button(recruitment.transform, "‹", 90, -119, 48, 48, () => { recruitRole = (Profession)(((int)recruitRole + Names.Length - 1) % Names.Length); Refresh(); });
+            Button(recruitment.transform, "›", 270, -119, 48, 48, () => { recruitRole = (Profession)(((int)recruitRole + 1) % Names.Length); Refresh(); });
+            Label(recruitment.transform, World.RecruitCost + " питания", 20, -206, 370, 30, 19);
+            recruitButton = Button(recruitment.transform, "Нанять", 20, -256, 370, 48, () => { world.Recruit(recruitRole); Refresh(); });
+            research = Overlay("Research", "");
+            foreach (var definition in ResearchProgress.Definitions)
+            {
+                var technology = definition;
+                int index = researchButtons.Count;
+                float x = 20 + index % 3 * 128;
+                float y = -64 - index / 3 * 140;
+                var button = Button(research.transform, technology.Name, x, y, 104, 64,
+                    () => { world.ResearchTechnology(technology.Type); Refresh(); }, iconSymbol: technology.Icon,
+                    holdDescription: () => technology.Name + "\nУровень " + world.Research.Level(technology.Type) + "/" + technology.MaxLevel + "\n" + technology.Description + "\n" + (world.Research.IsCompleted(technology.Type) ? "Максимальный уровень." : world.Research.NextCost(technology.Type) + " знаний за следующий уровень."));
+                Label(research.transform, technology.Name, x, y - 68, 120, 24, 16);
+                var price = Label(research.transform, "", x, y - 96, 120, 24, 16); price.color = Palette.Resources[(int)Resource.Knowledge]; researchPrices.Add(price);
+                researchButtons.Add(button);
+            }
+            workforce = Overlay("Workforce", "");
+            workforce.AddComponent<WorkforcePanel>().Initialize(font, () => world, Names);
+        }
+        GameObject Overlay(string name, string body)
+        {
+            var panel = Panel(safeArea, name, new Color(.08f, .115f, .15f));
+            bool colonyPanel = name == "Recruitment" || name == "Research" || name == "Workforce";
+            Vector2 anchor = colonyPanel ? new Vector2(0, 1) : new Vector2(1, 1);
+            panel.anchorMin = panel.anchorMax = panel.pivot = anchor;
+            panel.anchoredPosition = new Vector2(colonyPanel ? 88 : -12, -72); panel.sizeDelta = new Vector2(410, 390);
+            var text = Label(panel, body, 20, -55, 370, 320, 17); text.name = "Body";
+            Button(panel, "×", -56, -7, 48, 42, () => panel.gameObject.SetActive(false), true);
+            panel.gameObject.SetActive(false); return panel.gameObject;
+        }
+        void TogglePanel(GameObject panel)
+        {
+            bool show = !panel.activeSelf;
+            help.SetActive(false);
+            diagnostics.SetActive(false);
+            recruitment.SetActive(false);
+            research.SetActive(false);
+            workforce.SetActive(false);
+            panel.SetActive(show);
+            Refresh();
+        }
+        public void SelectPawn(int id) { SelectedPawn = id; chosenRole = world.Pawns[id].Role; Refresh(); }
+        public void SelectNode(int id) { SelectedPawn = -1; SelectedNode = id; Refresh(); }
+        void ChangeRole(int change) { chosenRole = (Profession)(((int)chosenRole + change + Names.Length) % Names.Length); Refresh(); }
+        void Convert()
+        {
+            feedback.text = world.Convert(SelectedPawn, chosenRole) ? "Смена профессии назначена на ядре" : "Преобразование недоступно";
+            Refresh();
+        }
+        void Restart(int seed)
+        {
+            sessionSeed = seed;
+            world = new World(seed); map.World = world; accumulator = 0; paused = false;
+            statistics.Reset();
+            map.Pan = Vector2.zero; map.Zoom = Screen.height > Screen.width ? 40 : 60; help.SetActive(false); diagnostics.SetActive(false);
+            recruitment.SetActive(false); research.SetActive(false);
+            workforce.SetActive(false);
+            feedback.text = ""; SelectNode(World.Home);
+        }
+        void Update()
+        {
+            Rect area = Screen.safeArea;
+            safeArea.anchorMin = new Vector2(area.xMin / Screen.width, area.yMin / Screen.height);
+            safeArea.anchorMax = new Vector2(area.xMax / Screen.width, area.yMax / Screen.height);
+            ApplyMapLayout();
+            int executedTicks = 0;
+            if (!paused && !world.Lost)
+            {
+                bool maximum = Speeds[speedIndex] == 0;
+                if (!maximum) accumulator = Mathf.Min(accumulator + Time.unscaledDeltaTime * Speeds[speedIndex], Speeds[speedIndex]);
+                var budget = System.Diagnostics.Stopwatch.StartNew();
+                while (!world.Lost && (maximum || accumulator >= .1f) && budget.Elapsed.TotalMilliseconds < 8)
+                {
+                    long before = budget.ElapsedTicks;
+                    world.Step();
+                    tickMs = (float)((budget.ElapsedTicks - before) * 1000.0 / System.Diagnostics.Stopwatch.Frequency);
+                    executedTicks++;
+                    if (!maximum) accumulator -= .1f;
+                }
+            }
+            statistics.Record(Time.unscaledDeltaTime, executedTicks);
+            refresh += Time.unscaledDeltaTime;
+            if (refresh > .2f) { refresh = 0; Refresh(); }
+        }
+        void Refresh()
+        {
+            if (world == null) return;
+            ApplyMapLayout();
+            playIcon.Symbol = paused ? "▶" : "Ⅱ"; playIcon.SetVerticesDirty();
+            speedText.text = Speeds[speedIndex] == 0 ? "MAX" : "×" + Speeds[speedIndex];
+            recruitRoleText.text = Names[(int)recruitRole] + "\n" + Descriptions[(int)recruitRole];
+            recruitPortrait.color = Palette.Professions[(int)recruitRole];
+            recruitButton.interactable = world.CanRecruit;
+            for (int i = 0; i < researchButtons.Count; i++)
+            {
+                var technology = ResearchProgress.Definitions[i];
+                bool completed = world.Research.IsCompleted(technology.Type);
+                researchButtons[i].interactable = world.CanResearchTechnology(technology.Type);
+                researchButtons[i].GetComponentInChildren<UiIcon>().color = completed ? Palette.Resources[2] : Color.white;
+                researchPrices[i].text = world.Research.Level(technology.Type) + "/" + technology.MaxLevel + (completed ? " · MAX" : " · " + world.Research.NextCost(technology.Type) + " ◆");
+            }
+            stocks.text = "";
+            for (int i = 0; i < 6; i++) stocks.text += "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Resources[i]) + ">■ " + world.Stores[(Resource)i].ToString("0") + "</color>  ";
+            bool pawnSelected = SelectedPawn >= 0;
+            pawnActions.SetActive(pawnSelected); nodeActions.SetActive(!pawnSelected && SelectedNode != World.Home && world.Nodes[SelectedNode].Known);
+            if (pawnSelected)
+            {
+                var pawn = world.Pawns[SelectedPawn];
+                portrait.color = Palette.Professions[(int)chosenRole]; caption.text = Names[(int)chosenRole]; description.text = Descriptions[(int)chosenRole];
+                details.text = "";
+                feedback.text = pawn.PendingRole.HasValue ? "На ядре → " + Names[(int)pawn.PendingRole.Value] : pawn.Health <= 0 ? "Погиб" : "";
+                convert.interactable = pawn.Health > 0 && pawn.Role != chosenRole && pawn.PendingRole != chosenRole && !world.Lost;
+            }
+            else
+            {
+                var node = world.Nodes[SelectedNode]; portrait.color = node.Id == World.Home ? Color.white : Color.gray;
+                caption.text = node.Id == World.Home ? "Ядро" : "Территория";
+                description.text = node.Known ? "" : "Не исследована";
+                details.text = "";
+                if (node.Known) foreach (var deposit in node.Deposits) details.text += ResourceNames[(int)deposit.Type] + " " + deposit.Amount.ToString("0") + "  ";
+                accessButton.GetComponentInChildren<Text>().text = node.Blocked ? "Открыть доступ" : "Закрыть доступ";
+                feedback.text = "";
+            }
+            if (world.Lost) feedback.text = "Колония потеряна · ↻ начать заново";
+            diagnosticText.text = "Seed " + world.Seed + "\nВремя " + world.Time.ToString("0") + " с\nТерритории " + world.Nodes.Count + "\nДороги " + world.Edges() + "\nПешки " + world.Pawns.Count + "\nТик " + tickMs.ToString("0.00") + " мс\nПоиски пути " + world.Searches + "\nМасштаб " + map.Zoom.ToString("0") + "\n" + map.InputStatus;
+            diagnosticText.text = "FPS " + statistics.FramesPerSecond.ToString("0") + "   TPS " + statistics.TicksPerSecond.ToString("0") + "\n" + diagnosticText.text;
+            if (pawnSelected)
+            {
+                var pawn = world.Pawns[SelectedPawn];
+                diagnosticText.text += "\n" + Names[(int)pawn.Role] + " · " + States[(int)pawn.State] + "\nПитание " + pawn.Food.ToString("0") + " · силы " + pawn.Energy.ToString("0") + "\nЗдоровье " + pawn.Health.ToString("0");
             }
         }
-        bool Btn(float x, float y, float w, string s) { return GUI.Button(new Rect(x, y, w, 38), s, button); }
-        void OnGUI()
+        void OnDestroy() { if (disc) Destroy(disc); if (discTexture) Destroy(discTexture); }
+        RectTransform Panel(Transform parent, string name, Color color)
         {
-            InitStyles(); float scale = Mathf.Min(Screen.width / 1200f, Screen.height / 760f); GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1200 * scale) / 2, (Screen.height - 760 * scale) / 2, 0), Quaternion.identity, new Vector3(scale, scale, 1)); Box(new Rect(0, 0, 1200, 760), new Color(.035f, .055f, .08f));
-            GUI.Label(new Rect(30, 17, 500, 40), "SIMPLE COLONY  /  маленький мир", title); GUI.Label(new Rect(30, 60, 740, 25), "Исследуй связи. Наладь снабжение. Удержи границу.", label);
-            if (Btn(810, 25, 100, speed == 0 ? "▶ Играть" : "Ⅱ Пауза")) speed = speed == 0 ? 1 : 0; if (Btn(920, 25, 75, "×" + speed)) speed = speed == 3 ? 1 : 3; if (Btn(1005, 25, 165, "Новая карта")) { world = new World(world.Seed + 1); selected = 14; accumulator = 0; }
-            DrawRoads();
-            for (int i = 0; i < 30; i++) { var n = world.Nodes[i]; if (!n.Known && !world.Frontier(i)) continue; Vector2 v = Pos(i); if (selected == i) Dot(v, 32, new Color(.55f, .73f, .83f)); if (n.Shield > 0) Dot(v, 29, colors[7]); Dot(v, 26, n.Known ? new Color(.12f, .19f, .24f) : new Color(.08f, .11f, .15f)); Dot(v, 7, i == 14 ? Color.white : n.Known ? colors[n.Kind] : Color.gray); if (n.Threat > 0 && n.Known) { Dot(v + new Vector2(17, -18), 9, colors[1]); GUI.Label(new Rect(v.x + 12, v.y - 29, 40, 25), "!", small); } GUI.Label(new Rect(v.x - 35, v.y + 26, 80, 25), i == 14 ? "ЯДРО" : n.Known ? resources[n.Kind] + " " + (int)n.Stock : "?", small); if (GUI.Button(new Rect(v.x - 28, v.y - 28, 56, 56), GUIContent.none, GUIStyle.none)) selected = i; }
-            foreach (var p in world.Pawns) { if (p.Health <= 0) continue; Vector2 v = Pos(p.At); if (p.Next >= 0) v = Vector2.Lerp(v, Pos(p.Next), Mathf.Clamp01(p.Progress + accumulator / .1f * .035f * world.SpeedBonus / Vector2.Distance(new Vector2(world.Nodes[p.At].X, world.Nodes[p.At].Y), new Vector2(world.Nodes[p.Next].X, world.Nodes[p.Next].Y)))); else { int idx = world.Pawns.IndexOf(p); v += new Vector2(Mathf.Cos(idx * 2.4f), Mathf.Sin(idx * 2.4f)) * 16; } Dot(v, 5, colors[p.Role]); if (p.Cargo > 0) Box(new Rect(v.x + 5, v.y - 7, 5, 5), colors[p.Role]); }
-            Box(new Rect(840, 90, 335, 635), new Color(.065f, .095f, .13f)); var node = world.Nodes[selected]; GUI.Label(new Rect(860, 105, 310, 35), selected == 14 ? "Ядро колонии" : "Территория " + selected, title); GUI.Label(new Rect(860, 145, 300, 30), node.Known ? (selected == 14 ? "Склад · отдых · профессии" : resources[node.Kind] + " / запас " + node.Stock.ToString("0")) : "Не исследована", label);
-            if (selected != 14) { if (Btn(860, 180, 295, "Приоритет: " + node.Priority)) node.Priority = (node.Priority + 1) % 4; if (Btn(860, 225, 295, node.Blocked ? "Открыть доступ" : "Запретить гражданским")) node.Blocked = !node.Blocked; }
-            GUI.Label(new Rect(860, 275, 300, 25), "ПРОФЕССИИ / назначение на базе", small); if (Btn(860, 305, 295, names[role] + "  →")) role = (role + 1) % 8;
-            if (Btn(860, 350, 295, "Создать / 25 питания")) world.Recruit(role);
-            if (Btn(860, 395, 295, "Перевести одного в профессию")) { foreach (var p in world.Pawns) if (p.Role != role && p.Health > 0 && p.PendingRole < 0) { p.PendingRole = role; break; } }
-            if (Btn(860, 440, 295, "Скорость +15% / 15 знаний")) world.Upgrade();
-            for (int k = 0; k < 8; k++) { GUI.color = colors[k]; GUI.Label(new Rect(860 + (k % 2) * 150, 490 + (k / 2) * 29, 150, 28), resources[k] + ": " + world.Stores[k].ToString("0"), small); GUI.color = Color.white; }
-            int known = 0, alive = 0, idle = 0; foreach (var n in world.Nodes) if (n.Known) known++; foreach (var p in world.Pawns) { if (p.Health > 0) alive++; if (p.State == "Нет работы") idle++; }
-            GUI.Label(new Rect(860, 620, 310, 30), "Пешки " + alive + "   Территории " + known + "/30", label); GUI.Label(new Rect(860, 653, 310, 55), "Цель: 20 территорий + технология\n" + (world.Lost ? "Колония потеряна" : known >= 20 && world.Tech > 0 ? "Цель достигнута — продолжай!" : "Развивай колонию"), small);
-            GUI.Label(new Rect(30, 660, 800, 30), world.Event, label); GUI.Label(new Rect(30, 700, 800, 28), "Seed " + world.Seed + "   •   " + (int)world.Time + " с   •   тик " + tickMs.ToString("0.00") + " мс   •   без работы " + idle + "   •   пути " + world.Searches, small);
+            var obj = new GameObject(name, typeof(RectTransform), typeof(Image)); obj.transform.SetParent(parent, false);
+            obj.GetComponent<Image>().color = color; return (RectTransform)obj.transform;
+        }
+        Text Label(Transform parent, string value, float x, float y, float width, float height, int size)
+        {
+            var obj = new GameObject("Text", typeof(RectTransform), typeof(Text)); obj.transform.SetParent(parent, false);
+            var text = obj.GetComponent<Text>(); text.font = font; text.fontSize = size; text.color = new Color(.87f, .92f, .96f); text.text = value;
+            text.raycastTarget = false; text.supportRichText = true; Place(text.rectTransform, x, y, width, height); return text;
+        }
+        Button Button(Transform parent, string title, float x, float y, float width, float height, UnityEngine.Events.UnityAction action, bool right = false, string iconSymbol = null, string holdText = null, Func<string> holdDescription = null)
+        {
+            var panel = Panel(parent, title, new Color(.13f, .2f, .26f)); Place(panel, x, y, width, height);
+            if (right) { panel.anchorMin = panel.anchorMax = Vector2.one; }
+            var button = panel.gameObject.AddComponent<Button>(); button.targetGraphic = panel.GetComponent<Image>();
+            HoldDescription hold = null;
+            if (iconSymbol != null || holdText != null || holdDescription != null || title.Length == 1)
+            {
+                hold = panel.gameObject.AddComponent<HoldDescription>();
+                hold.Initialize(descriptionPopup, holdDescription ?? (() => holdText ?? IconDescription(iconSymbol ?? title, title)));
+            }
+            button.onClick.AddListener(() => { if (hold == null || !hold.SuppressClick) action(); });
+            if (title.Length == 1 || iconSymbol != null)
+            {
+                var obj = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(UiIcon)); obj.transform.SetParent(panel, false);
+                var icon = obj.GetComponent<UiIcon>(); icon.Symbol = iconSymbol ?? title; icon.raycastTarget = false;
+                Place(icon.rectTransform, (width - 28) / 2, -(height - 28) / 2, 28, 28);
+            }
+            else
+            {
+                var text = Label(panel, title, 0, 0, width, height, 21); text.alignment = TextAnchor.MiddleCenter;
+            }
+            return button;
+        }
+        static void Place(RectTransform rect, float x, float y, float width, float height)
+        { rect.anchorMin = rect.anchorMax = new Vector2(0, 1); rect.pivot = new Vector2(0, 1); rect.anchoredPosition = new Vector2(x, y); rect.sizeDelta = new Vector2(width, height); }
+        static void Stretch(RectTransform rect) { rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero; }
+        static void Anchor(RectTransform rect, Vector2 min, Vector2 max, Vector2 offsetMin, Vector2 offsetMax)
+        { rect.anchorMin = min; rect.anchorMax = max; rect.offsetMin = offsetMin; rect.offsetMax = offsetMax; }
+        static string IconDescription(string symbol, string fallback)
+        {
+            switch (symbol)
+            {
+                case "▶": return "Приостановить или продолжить симуляцию.";
+                case "×": return "Закрыть окно.";
+                case "↻": return "Начать заново на новой карте.";
+                case "?": return "Обозначения и управление. Удерживайте значок для подробностей.";
+                case "…": return "Статистика симуляции, TPS и FPS.";
+                case "⌂": return "Вернуться к ядру колонии.";
+                case "‹": return "Предыдущая профессия.";
+                case "›": return "Следующая профессия.";
+                default: return fallback;
+            }
+        }
+        void ApplyMapLayout()
+        {
+            bool portraitMode = Screen.height > Screen.width;
+            if (!layoutReady || portraitMode != portraitLayout)
+            {
+                portraitLayout = portraitMode;
+                canvasScaler.referenceResolution = portraitMode ? new Vector2(480, 800) : new Vector2(1000, 650);
+                map.Pan = Vector2.zero;
+                map.Zoom = portraitMode ? 40 : 60;
+                layoutReady = true;
+            }
+            float headerHeight = portraitMode ? 112 : 64;
+            float bottomHeight = portraitMode ? 180 : 140;
+            topPanel.offsetMin = new Vector2(0, -headerHeight);
+            selectionPanel.offsetMax = new Vector2(0, bottomHeight);
+            colonyControlsRect.anchoredPosition = new Vector2(12, -headerHeight - 16);
+            Place(stocks.rectTransform, portraitMode ? 12 : 218, portraitMode ? -72 : -9, portraitMode ? safeArea.rect.width - 24 : 530, 36);
+            Place(description.rectTransform, 210, -14, portraitMode ? Mathf.Max(100, safeArea.rect.width - 290) : 600, portraitMode ? 44 : 28);
+            Place(details.rectTransform, 210, portraitMode ? -58 : -44, portraitMode ? safeArea.rect.width - 226 : 700, portraitMode ? 48 : 30);
+            Place(convert.GetComponent<RectTransform>(), 210, portraitMode ? -118 : -76, 180, 48);
+            Place(accessButton.GetComponent<RectTransform>(), 210, portraitMode ? -118 : -76, 180, 48);
+            Place(feedback.rectTransform, portraitMode ? 12 : 410, portraitMode ? -136 : -88, portraitMode ? 184 : 500, portraitMode ? 36 : 30);
+            PositionMenu(recruitment, portraitMode, true, bottomHeight);
+            PositionMenu(research, portraitMode, true, bottomHeight);
+            PositionMenu(workforce, portraitMode, true, bottomHeight);
+            PositionMenu(diagnostics, portraitMode, false, bottomHeight);
+            if (portraitMode)
+            {
+                bool menuOpen = recruitment.activeSelf || research.activeSelf || workforce.activeSelf || diagnostics.activeSelf || help.activeSelf;
+                mapViewport.offsetMin = new Vector2(88, bottomHeight + (menuOpen ? 374 : 0));
+                mapViewport.offsetMax = new Vector2(0, -headerHeight);
+                return;
+            }
+            float left = 88;
+            if (recruitment.activeSelf || research.activeSelf || workforce.activeSelf) left = 510;
+            if (help.activeSelf) left = 100 + ((RectTransform)help.transform).rect.width;
+            float right = diagnostics.activeSelf ? 434 : 0;
+            mapViewport.offsetMin = new Vector2(left, bottomHeight);
+            mapViewport.offsetMax = new Vector2(-right, -headerHeight);
+        }
+        static void PositionMenu(GameObject menu, bool portraitMode, bool left, float bottomHeight)
+        {
+            var rect = (RectTransform)menu.transform;
+            Vector2 anchor = portraitMode ? new Vector2(.5f, 0) : new Vector2(left ? 0 : 1, 1);
+            rect.anchorMin = rect.anchorMax = rect.pivot = anchor;
+            rect.anchoredPosition = portraitMode ? new Vector2(0, bottomHeight + 12) : new Vector2(left ? 88 : -12, -72);
+            rect.sizeDelta = new Vector2(410, portraitMode ? 350 : 390);
         }
     }
 }
-

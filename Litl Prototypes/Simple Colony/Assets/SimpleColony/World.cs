@@ -1,76 +1,266 @@
 using System;
 using System.Collections.Generic;
+
 namespace SimpleColony
 {
-    public sealed class Node
-    {
-        public float X, Y, Stock, Threat, Boost, Shield; public int Kind, Priority = 1; public bool Known, Blocked; public List<int> Links = new List<int>();
-    }
-    public sealed class Pawn
-    {
-        public int Role, At = 14, Next = -1, Target = -1, PendingRole = -1; public float Progress, Food = 100, Energy = 100, Health = 100, Work, Cargo; public string State = "Ожидание";
-    }
     public sealed class World
     {
-        public const int Home = 14; public readonly Node[] Nodes = new Node[30]; public readonly List<Pawn> Pawns = new List<Pawn>();
-        public readonly float[] Stores = new float[8]; public int Seed, Tick, Searches, Tech; public float Time; public bool Lost; public string Event = "Колония основана";
-        readonly Random rng; readonly int[] reserved = new int[30]; public float SpeedBonus = 1;
+        public const int Home = 0;
+        readonly List<Node> nodes = new List<Node>();
+        readonly List<Pawn> pawns = new List<Pawn>();
+        readonly Random random;
+        readonly Pathfinder pathfinder;
+        readonly Dictionary<Profession, IProfessionBehavior> behaviors;
+        public IReadOnlyList<Node> Nodes => nodes;
+        public IReadOnlyList<Pawn> Pawns => pawns;
+        public Inventory Stores { get; } = new Inventory();
+        public TravelPolicy Travel { get; } = new TravelPolicy();
+        public int Seed { get; }
+        public int Tick { get; private set; }
+        public int Searches { get; internal set; }
+        public int GraphRevision { get; private set; }
+        public float Time { get; private set; }
+        public bool Lost { get; private set; }
+        public ResearchProgress Research { get; } = new ResearchProgress();
+        public bool TransportResearched => Research.Level(ResearchType.Transport) > 0;
+        public int CargoCapacity => 8 + 4 * Research.Level(ResearchType.Logistics);
+        public float RecoveryRate => 5 + 3 * Research.Level(ResearchType.Recovery);
+        public float DefensePower => 1 + .5f * Research.Level(ResearchType.Defense);
+        public const int RecruitCost = 25;
+        public const int ResearchCost = 15;
+        public bool CanRecruit => !Lost && pawns.Count < 60 && Stores[Resource.Food] >= RecruitCost;
+        public bool CanResearch => CanResearchTechnology(ResearchType.Transport);
+        public bool CanResearchTechnology(ResearchType type) => !Lost && Research.CanPurchase(type, Stores);
+        public string Event { get; private set; } = "Колония основана";
         public World(int seed)
         {
-            Seed = seed; rng = new Random(seed);
-            for (int i = 0; i < 30; i++) Nodes[i] = new Node { X = i % 6 + (float)rng.NextDouble() * .32f, Y = i / 6 + (float)rng.NextDouble() * .32f, Kind = new[] { 0, 3, 4, 5, 6, 7 }[rng.Next(6)], Stock = 35 + rng.Next(30) };
-            var visited = new HashSet<int> { Home }; var stack = new Stack<int>(); stack.Push(Home);
-            while (stack.Count > 0) { int a = stack.Peek(); var candidates = Adjacent(a).FindAll(b => !visited.Contains(b)); if (candidates.Count == 0) { stack.Pop(); continue; } int b = candidates[rng.Next(candidates.Count)]; Link(a, b); visited.Add(b); stack.Push(b); }
-            for (int k = 0; k < 200 && Edges() < 37; k++) { int a = rng.Next(30); var ns = Adjacent(a); int b = ns[rng.Next(ns.Count)]; if (!Nodes[a].Links.Contains(b)) Link(a, b); }
-            Nodes[Home].Known = true; Nodes[Home].Kind = -1; foreach (int n in Nodes[Home].Links) { Nodes[n].Known = true; Nodes[n].Kind = 0; }
-            Stores[0] = 100; for (int i = 0; i < 8; i++) Pawns.Add(new Pawn { Role = i }); Pawns.Add(new Pawn { Role = 0 }); Pawns.Add(new Pawn { Role = 0 });
+            Seed = seed; random = new Random(seed); pathfinder = new Pathfinder(this);
+            behaviors = new Dictionary<Profession, IProfessionBehavior> {
+                { Profession.Gatherer, new GatheringBehavior(Resource.Food) }, { Profession.Defender, new CombatBehavior() },
+                { Profession.Scout, new ExplorationBehavior() }, { Profession.Researcher, new ResearchBehavior() },
+                { Profession.Builder, new GatheringBehavior(Resource.Matter) }, { Profession.Supplier, new GatheringBehavior(Resource.Charge) },
+                { Profession.Medic, new GatheringBehavior(Resource.Medicine) }, { Profession.Stabilizer, new StabilizationBehavior() }
+            };
+            nodes.Add(new Node(0, 0, 0) { Known = true }); Expand(0);
+            int initial = nodes.Count;
+            for (int i = 1; i < initial; i++) { nodes[i].Known = true; Expand(i); }
+            if (nodes[1].Find(Resource.Food) == null) nodes[1].Add(new Deposit(Resource.Food, 80));
+            Stores.Add(Resource.Food, 120);
+            AddPawn(Profession.Gatherer); AddPawn(Profession.Gatherer); AddPawn(Profession.Scout); AddPawn(Profession.Defender);
+            SpawnThreat();
         }
-        List<int> Adjacent(int i) { var r = new List<int>(); if (i % 6 > 0) r.Add(i - 1); if (i % 6 < 5) r.Add(i + 1); if (i >= 6) r.Add(i - 6); if (i < 24) r.Add(i + 6); return r; }
-        void Link(int a, int b) { Nodes[a].Links.Add(b); Nodes[b].Links.Add(a); }
-        public int Edges() { int n = 0; foreach (var v in Nodes) n += v.Links.Count; return n / 2; }
-        public bool Frontier(int n) { foreach (int i in Nodes[n].Links) if (Nodes[i].Known) return true; return false; }
-        public int Path(int start, int goal, bool fighter)
+        void AddPawn(Profession role) { pawns.Add(new Pawn { Id = pawns.Count, Role = role, At = Home }); }
+        public bool Recruit(Profession role)
         {
-            Searches++; var d = new float[30]; var prev = new int[30]; var used = new bool[30]; for (int i = 0; i < 30; i++) { d[i] = float.MaxValue; prev[i] = -1; }
-            d[start] = 0;
-            for (int k = 0; k < 30; k++)
-            {
-                int a = -1; for (int i = 0; i < 30; i++) if (!used[i] && (a < 0 || d[i] < d[a])) a = i; if (a < 0 || d[a] == float.MaxValue) break; if (a == goal) break; used[a] = true;
-                foreach (int b in Nodes[a].Links) { if (b != goal && !Nodes[b].Known) continue; if (!fighter && (Nodes[b].Blocked || Nodes[b].Threat > 1)) continue; float dx = Nodes[a].X - Nodes[b].X, dy = Nodes[a].Y - Nodes[b].Y; float cost = (float)Math.Sqrt(dx * dx + dy * dy); if (d[a] + cost < d[b]) { d[b] = d[a] + cost; prev[b] = a; } }
-            }
-            if (start == goal) return start; if (prev[goal] < 0) return -1; int p = goal; while (prev[p] != start) { p = prev[p]; if (p < 0) return -1; }
-            return p;
+            if (!CanRecruit || !Enum.IsDefined(typeof(Profession), role)) return false;
+            if (!Stores.Spend(Resource.Food, RecruitCost)) return false;
+            AddPawn(role);
+            return true;
         }
-        void Release(Pawn p) { if (p.Target >= 0) reserved[p.Target] = Math.Max(0, reserved[p.Target] - 1); p.Target = -1; p.Work = 0; }
-        public bool Recruit(int role) { if (Stores[0] < 25 || Pawns.Count >= 60) return false; Stores[0] -= 25; Pawns.Add(new Pawn { Role = role }); return true; }
-        public bool Upgrade() { if (Stores[3] < 15) return false; Stores[3] -= 15; Tech++; SpeedBonus += .15f; return true; }
-        public void Step()
+        public bool ResearchTransport()
+        { return ResearchTechnology(ResearchType.Transport); }
+        public bool ResearchTechnology(ResearchType type)
         {
-            if (Lost) return; Tick++; Time += .1f;
-            foreach (var n in Nodes) { n.Boost = Math.Max(0, n.Boost - .1f); n.Shield = Math.Max(0, n.Shield - .1f); if (n.Kind == 0 || n.Kind == 5) n.Stock = Math.Min(80, n.Stock + .1f * (n.Boost > 0 ? 1.5f : .35f)); if (n.Threat > 0) n.Stock = Math.Max(0, n.Stock - n.Threat * .002f); }
-            if (Tick % 300 == 0 && Time > 60) { int a = rng.Next(30); if (Math.Abs(a % 6 - Home % 6) + Math.Abs(a / 6 - Home / 6) >= 4) { Nodes[a].Threat += 8; Event = "На окраине появился очаг"; } }
-            if (Tick % 100 == 0) { var add = new float[30]; for (int i = 0; i < 30; i++) if (Nodes[i].Threat > 0) { Nodes[i].Threat = Math.Min(40, Nodes[i].Threat + 1); if (Nodes[i].Threat > 10 && Nodes[i].Shield <= 0) { int b = Nodes[i].Links[rng.Next(Nodes[i].Links.Count)]; if (Nodes[b].Shield <= 0) add[b] += 2; } } for (int i = 0; i < 30; i++) Nodes[i].Threat += add[i]; }
-            foreach (var p in Pawns)
-            {
-                if (p.Health <= 0) continue; p.Food -= .035f; p.Energy -= .02f; if (p.Food <= 0) p.Health -= .08f;
-                if (p.Next >= 0) { float dx = Nodes[p.At].X - Nodes[p.Next].X, dy = Nodes[p.At].Y - Nodes[p.Next].Y; float length = (float)Math.Sqrt(dx * dx + dy * dy); p.Progress += .035f * SpeedBonus / length; if (p.Progress >= 1) { p.At = p.Next; p.Next = -1; p.Progress = 0; } continue; }
-                if (p.At == Home) { if (p.Cargo > 0) { Stores[p.Role] += p.Cargo; p.Cargo = 0; } if (p.PendingRole >= 0) { Release(p); p.Role = p.PendingRole; p.PendingRole = -1; } if (p.Food < 85 && Stores[0] >= 1) { Stores[0]--; p.Food = Math.Min(100, p.Food + 12); } if (p.Health < 100 && Stores[6] >= .1f) { Stores[6] -= .1f; p.Health = Math.Min(100, p.Health + 1); } if (p.Energy < 95) { p.Energy += .6f; p.State = "Отдых"; Release(p); continue; } }
-                bool rest = ((Time + (Pawns.IndexOf(p) % 2) * 60) % 120) > 95;
-                if (p.Cargo > 0 || p.Food < 30 || p.Energy < 20 || p.Health < 35 || p.PendingRole >= 0 || rest) { Release(p); Go(p, Home); continue; }
-                if (Nodes[p.At].Threat > 0 && p.Role != 1) { Release(p); Go(p, Home); continue; }
-                if (p.Target < 0) { float best = float.MaxValue; for (int i = 0; i < 30; i++) { var n = Nodes[i]; bool valid = p.Role == 2 ? !n.Known && Frontier(i) : n.Known && !n.Blocked && n.Priority > 0 && (p.Role == 1 ? n.Threat > 0 : n.Kind == p.Role && n.Stock > reserved[i] * 4 && n.Threat <= 0); if (!valid || i == Home) continue; float score = (Math.Abs(n.X - Nodes[p.At].X) + Math.Abs(n.Y - Nodes[p.At].Y) + reserved[i] * 3) / Math.Max(1, n.Priority); if (score < best && Path(p.At, i, p.Role == 1) >= 0) { best = score; p.Target = i; } } if (p.Target >= 0) reserved[p.Target]++; }
-                if (p.Target < 0) { p.State = "Нет работы"; continue; }
-                if (p.At != p.Target) { Go(p, p.Target); continue; }
-                var node = Nodes[p.At]; p.State = "Работает"; p.Work += .1f;
-                if (p.Role == 1) { node.Threat = Math.Max(0, node.Threat - .15f); p.Health -= .025f; if (node.Threat <= 0) Release(p); }
-                else if (p.Role == 2) { if (p.Work >= 3) { node.Known = true; Event = "Открыта территория " + p.At; Release(p); } }
-                else if (p.Role == 3) { float take = Math.Min(node.Stock, .1f); node.Stock -= take; Stores[3] += take; if (node.Stock <= 0) Release(p); }
-                else if (p.Role == 7) { float take = Math.Min(node.Stock, .05f); node.Stock -= take; node.Shield = 3; foreach (int b in node.Links) Nodes[b].Shield = 3; if (node.Stock <= 0) Release(p); }
-                else if (p.Work >= 2) { float take = Math.Min(4, node.Stock); node.Stock -= take; p.Cargo = take; Release(p); }
-            }
-            if (Tick % 50 == 0) { if (Stores[5] >= 1) { foreach (var n in Nodes) if (n.Known && n.Kind == 0) { n.Boost = 10; Stores[5]--; break; } } if (Stores[4] >= 10) { Stores[4] -= 10; SpeedBonus += .02f; Event = "Улучшена транспортная сеть"; } }
-            int alive = 0; foreach (var p in Pawns) if (p.Health > 0) alive++; Lost = alive == 0 || Nodes[Home].Threat > 25;
+            if (Lost || !Research.Purchase(type, Stores)) return false;
+            if (type == ResearchType.Transport) Travel.ImproveTransportation(.15f);
+            if (type == ResearchType.Rations) Travel.FoodMultiplier = 1 - .2f * Research.Level(type);
+            return true;
         }
-        void Go(Pawn p, int goal) { if (p.At == goal) { p.State = "На базе"; return; } p.Next = Path(p.At, goal, p.Role == 1); p.State = p.Next < 0 ? "Нет пути" : "В пути"; if (p.Next < 0) Release(p); }
+        void Connect(int a, int b) { nodes[a].Link(b); nodes[b].Link(a); GraphRevision++; }
+        void Expand(int id)
+        {
+            var origin = nodes[id]; if (origin.Expanded) return; origin.Expanded = true;
+            int directions = id == Home ? 6 : 3;
+            double offset = random.NextDouble() * Math.PI * 2;
+            for (int i = 0; i < directions; i++)
+            {
+                double angle = offset + Math.PI * 2 * i / directions;
+                float x = origin.X + (float)Math.Cos(angle) * 1.8f, y = origin.Y + (float)Math.Sin(angle) * 1.8f;
+                Node nearby = nodes.Find(n => n.Id != id && (n.X - x) * (n.X - x) + (n.Y - y) * (n.Y - y) < 1.3f);
+                if (nearby != null) { Connect(id, nearby.Id); continue; }
+                var node = new Node(nodes.Count, x, y);
+                int first = random.Next(6); node.Add(new Deposit((Resource)first, 35 + random.Next(40)));
+                if (random.NextDouble() < .65) node.Add(new Deposit((Resource)((first + 1 + random.Next(5)) % 6), 25 + random.Next(35)));
+                nodes.Add(node); Connect(id, node.Id);
+            }
+        }
+        public void Discover(int id) { nodes[id].Known = true; Expand(id); GraphRevision++; Event = "Открыта территория"; }
+        public bool Frontier(int id) { foreach (int next in nodes[id].Links) if (nodes[next].Known) return true; return false; }
+        public int Edges() { int count = 0; foreach (var node in nodes) count += node.Links.Count; return count / 2; }
+        public int Path(int start, int goal, bool fighter) { var route = pathfinder.Find(start, goal, fighter); return route == null ? -1 : route.Count == 0 ? start : route[0]; }
+        public bool Convert(int pawnId, Profession role)
+        {
+            if (Lost || pawnId < 0 || pawnId >= pawns.Count || !Enum.IsDefined(typeof(Profession), role)) return false;
+            var pawn = pawns[pawnId];
+            if (pawn.Health <= 0 || (pawn.PendingRole ?? pawn.Role) == role) return false;
+            pawn.PendingRole = pawn.Role == role ? (Profession?)null : role;
+            Release(pawn);
+            return true;
+        }
+        public int ProfessionCount(Profession role)
+        {
+            int count = 0;
+            foreach (var pawn in pawns)
+                if (pawn.Health > 0 && (pawn.PendingRole ?? pawn.Role) == role) count++;
+            return count;
+        }
+        public bool AdjustProfession(Profession role, int change)
+        {
+            if (Lost || role == Profession.Unemployed || !Enum.IsDefined(typeof(Profession), role) || (change != 1 && change != 3 && change != -1)) return false;
+            Profession source = change > 0 ? Profession.Unemployed : role;
+            var candidates = pawns.FindAll(p => p.Health > 0 && (p.PendingRole ?? p.Role) == source);
+            int requested = Math.Abs(change);
+            if (candidates.Count < requested) return false;
+            candidates.Sort((a, b) => {
+                int first = a.At == Home && a.Next < 0 ? 0 : 1;
+                int second = b.At == Home && b.Next < 0 ? 0 : 1;
+                int order = first.CompareTo(second);
+                return order == 0 ? a.Id.CompareTo(b.Id) : order;
+            });
+            for (int i = 0; i < requested; i++) Convert(candidates[i].Id, change > 0 ? role : Profession.Unemployed);
+            return true;
+        }
+        public void SetPriority(int id) { if (id != Home && nodes[id].Known) nodes[id].Priority = (nodes[id].Priority + 1) % 4; }
+        public void ToggleAccess(int id) { if (id != Home && nodes[id].Known) nodes[id].Blocked = !nodes[id].Blocked; }
+        void Release(Pawn pawn) { pawn.Target = -1; pawn.Work = 0; }
+        int Reservations(int id) { int count = 0; foreach (var pawn in pawns) if (pawn.Health > 0 && pawn.Target == id) count++; return count; }
+        bool DefenseOccupied(int nodeId)
+        {
+            foreach (var pawn in pawns)
+                if (pawn.Role == Profession.Defender && pawn.Health > 0 && !pawn.PendingRole.HasValue && pawn.Target == nodeId) return true;
+            return false;
+        }
+        void SelectWork(Pawn pawn)
+        {
+            float best = float.MaxValue;
+            foreach (var node in nodes)
+            {
+                if (node.Id == Home || node.Priority == 0 || !Travel.Accessible(node, pawn.Role == Profession.Defender) || !behaviors[pawn.Role].CanWork(this, node)) continue;
+                // An assignment reserves the defense job immediately, including travel time.
+                if (pawn.Role == Profession.Defender && DefenseOccupied(node.Id)) continue;
+                float score = (Travel.Length(nodes[pawn.At], node) + Reservations(node.Id) * 4) / node.Priority;
+                if (score >= best) continue;
+                var route = pathfinder.Find(pawn.At, node.Id, pawn.Role == Profession.Defender);
+                if (route == null) continue;
+                float food = 0, energy = 0; int previous = pawn.At;
+                foreach (int next in route) { food += Travel.FoodCost(nodes[previous], nodes[next]); energy += Travel.EnergyCost(nodes[previous], nodes[next]); previous = next; }
+                var returnRoute = pathfinder.Find(node.Id, Home, pawn.Role == Profession.Defender);
+                if (returnRoute == null) continue;
+                previous = node.Id;
+                foreach (int next in returnRoute) { food += Travel.FoodCost(nodes[previous], nodes[next]); energy += Travel.EnergyCost(nodes[previous], nodes[next]); previous = next; }
+                if (pawn.Food < food + 20 || pawn.Energy < energy + 15) continue;
+                best = score; pawn.Target = node.Id;
+            }
+        }
+        void Go(Pawn pawn, int goal)
+        {
+            int next = Path(pawn.At, goal, pawn.Role == Profession.Defender);
+            if (next < 0 || next == pawn.At) { Release(pawn); pawn.State = Activity.Idle; return; }
+            float food = Travel.FoodCost(nodes[pawn.At], nodes[next]), energy = Travel.EnergyCost(nodes[pawn.At], nodes[next]);
+            if (pawn.Food < food || pawn.Energy < energy) { Release(pawn); pawn.State = Activity.Resting; return; }
+            pawn.Food -= food; pawn.Energy -= energy; pawn.Next = next; pawn.Progress = 0; pawn.State = Activity.Moving;
+        }
+        void SpawnThreat()
+        {
+            var distance = new float[nodes.Count]; var used = new bool[nodes.Count];
+            for (int i = 1; i < distance.Length; i++) distance[i] = float.MaxValue;
+            for (int step = 0; step < nodes.Count; step++)
+            {
+                int current = -1;
+                for (int i = 0; i < nodes.Count; i++) if (!used[i] && (current < 0 || distance[i] < distance[current])) current = i;
+                if (current < 0 || distance[current] == float.MaxValue) break;
+                used[current] = true;
+                foreach (int next in nodes[current].Links) distance[next] = Math.Min(distance[next], distance[current] + Travel.Length(nodes[current], nodes[next]));
+            }
+            int farthest = 1;
+            for (int i = 1; i < distance.Length; i++) if (distance[i] > distance[farthest]) farthest = i;
+            nodes[farthest].Threat += 6; Event = "На границе появился очаг";
+        }
+        public void Step() => Step(.1f);
+        public void Step(float dt)
+        {
+            if (Lost || dt <= 0) return;
+            Tick++; Time += dt;
+            foreach (var node in nodes)
+            {
+                node.Shield = Math.Max(0, node.Shield - dt);
+                foreach (var deposit in node.Deposits)
+                {
+                    if (deposit.Type == Resource.Food || deposit.Type == Resource.Charge) deposit.Regenerate(dt * .025f);
+                    if (node.Threat > 0) deposit.Take(node.Threat * dt * .002f);
+                }
+            }
+            if (Tick % 900 == 0) SpawnThreat();
+            if (Tick % 100 == 0)
+            {
+                var spreading = new float[nodes.Count];
+                foreach (var node in nodes)
+                {
+                    if (node.Threat <= 0) continue;
+                    node.Threat = Math.Min(35, node.Threat + .5f);
+                    if (node.Threat > 10 && node.Shield <= 0)
+                    { int next = node.Links[random.Next(node.Links.Count)]; if (nodes[next].Shield <= 0) spreading[next] += 1; }
+                }
+                for (int i = 0; i < nodes.Count; i++) nodes[i].Threat += spreading[i];
+            }
+            foreach (var pawn in pawns) UpdatePawn(pawn, dt);
+            if (Tick % 50 == 0 && Stores.Spend(Resource.Matter, 10)) Travel.ImproveTransportation();
+            if (Tick % 100 == 0)
+            {
+                foreach (var node in nodes)
+                {
+                    var food = node.Find(Resource.Food);
+                    if (node.Known && food != null && food.Amount < food.Capacity && Stores.Spend(Resource.Charge, .5f)) { food.Regenerate(3); break; }
+                }
+            }
+            Lost = pawns.TrueForAll(p => p.Health <= 0) || nodes[Home].Threat > 25;
+        }
+        void UpdatePawn(Pawn pawn, float dt)
+        {
+            if (pawn.Health <= 0) { Release(pawn); pawn.State = Activity.Dead; return; }
+            pawn.Food = Math.Max(0, pawn.Food - dt * .08f);
+            if (pawn.Food <= 0) pawn.Health = Math.Max(0, pawn.Health - dt * .6f);
+            if (pawn.Health <= 0) { Release(pawn); pawn.State = Activity.Dead; return; }
+            if (pawn.Next >= 0)
+            {
+                pawn.Progress += dt * .18f * Travel.SpeedMultiplier / Travel.Length(nodes[pawn.At], nodes[pawn.Next]);
+                if (pawn.Progress >= 1) { pawn.At = pawn.Next; pawn.Next = -1; pawn.Progress = 0; }
+                return;
+            }
+            if (pawn.At == Home)
+            {
+                if (pawn.Cargo > 0) { Stores.Add(pawn.CargoType, pawn.Cargo); pawn.Cargo = 0; }
+                if (pawn.PendingRole.HasValue) { pawn.Role = pawn.PendingRole.Value; pawn.PendingRole = null; Release(pawn); }
+                if (pawn.Food < 95 && Stores.Spend(Resource.Food, dt)) pawn.Food = Math.Min(100, pawn.Food + dt * 12);
+                if (pawn.Health < 100 && Stores.Spend(Resource.Medicine, dt * .1f)) pawn.Health = Math.Min(100, pawn.Health + dt);
+                if (pawn.Energy < 98 || (pawn.Food < 90 && Stores[Resource.Food] > 0)) { pawn.Energy = Math.Min(100, pawn.Energy + dt * RecoveryRate); pawn.State = Activity.Resting; Release(pawn); return; }
+            }
+            if (pawn.State == Activity.Resting && pawn.At != Home) pawn.Energy = Math.Min(100, pawn.Energy + dt);
+            if (pawn.Role == Profession.Unemployed && !pawn.PendingRole.HasValue && pawn.Cargo <= 0)
+            {
+                Release(pawn);
+                pawn.State = Activity.Idle;
+                if (pawn.At != Home) Go(pawn, Home);
+                return;
+            }
+            if (pawn.Cargo > 0 || pawn.PendingRole.HasValue || pawn.Food < 30 || pawn.Energy < 25 || pawn.Health < 35 || (nodes[pawn.At].Threat > 0 && pawn.Role != Profession.Defender))
+            { Release(pawn); Go(pawn, Home); return; }
+            if (pawn.Target >= 0 && (!behaviors[pawn.Role].CanWork(this, nodes[pawn.Target]) || nodes[pawn.Target].Priority == 0 || !Travel.Accessible(nodes[pawn.Target], pawn.Role == Profession.Defender))) Release(pawn);
+            if (pawn.Target < 0) SelectWork(pawn);
+            if (pawn.Target < 0)
+            {
+                if (pawn.Role == Profession.Defender)
+                {
+                    pawn.State = Activity.Guarding;
+                    return;
+                }
+                pawn.State = Activity.Idle;
+                if (pawn.At != Home) Go(pawn, Home);
+                return;
+            }
+            if (pawn.At != pawn.Target) { Go(pawn, pawn.Target); return; }
+            pawn.State = Activity.Working; pawn.Work += dt;
+            if (behaviors[pawn.Role].Work(this, pawn, nodes[pawn.At], dt)) Release(pawn);
+        }
     }
 }
