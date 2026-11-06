@@ -9,6 +9,7 @@ public static class SimulationValidation
 
     public static void Run()
     {
+        ValidateModuleConfigurations();
         for (int seed = 0; seed < 30; seed++)
         {
             var world = new World(seed);
@@ -84,6 +85,25 @@ public static class SimulationValidation
         var food = new Deposit(Resource.Food, 10); var matter = new Deposit(Resource.Matter, 20);
         Require(food.Take(15) == 10 && food.Amount == 0 && matter.Amount == 20, "Independent depletion");
     }
+    static void ValidateModuleConfigurations()
+    {
+        foreach (Mechanics selection in new[] { Mechanics.None, Mechanics.Threats, Mechanics.Research, Mechanics.All })
+        {
+            var world = new World(4271, selection);
+            bool threats = (selection & Mechanics.Threats) != 0;
+            bool research = (selection & Mechanics.Research) != 0;
+            bool foundThreat = false;
+            foreach (var node in world.Nodes) foundThreat |= node.Threat > 0;
+            Require(foundThreat == threats, "Initial threat configuration");
+            typeof(Inventory).GetMethod("Add", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .Invoke(world.Stores, new object[] { Resource.Knowledge, 100f });
+            Require(world.ResearchTransport() == research, "Research module purchase");
+            for (int i = 0; i < 1000; i++) world.Step();
+            if (!threats)
+                foreach (var node in world.Nodes) Require(node.Threat == 0, "Disabled threat module spawned an outbreak");
+        }
+    }
+
     static void ValidateFrontierThreat(World world)
     {
         var distances = new float[world.Nodes.Count];

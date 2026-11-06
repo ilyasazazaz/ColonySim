@@ -3,27 +3,6 @@ using System.Collections.Generic;
 
 namespace SimpleColony
 {
-    public enum ResearchType { Transport, Logistics, Rations, Recovery, Defense }
-
-    public sealed class ResearchDefinition
-    {
-        public ResearchType Type { get; }
-        public string Name { get; }
-        public string Icon { get; }
-        public string Description { get; }
-        public int Cost { get; }
-        public int MaxLevel => 3;
-
-        public ResearchDefinition(ResearchType type, string name, string icon, string description, int cost)
-        {
-            Type = type;
-            Name = name;
-            Icon = icon;
-            Description = description;
-            Cost = cost;
-        }
-    }
-
     public sealed class ResearchProgress
     {
         static readonly IReadOnlyList<ResearchDefinition> definitions = Array.AsReadOnly(new[] {
@@ -48,34 +27,6 @@ namespace SimpleColony
             if (!CanPurchase(type, stores) || !stores.Spend(Resource.Knowledge, NextCost(type))) return false;
             levels[type] = Level(type) + 1;
             return true;
-        }
-    }
-
-    public sealed class RuntimeStatistics
-    {
-        double elapsed;
-        int frames, ticks;
-        public double FramesPerSecond { get; private set; }
-        public double TicksPerSecond { get; private set; }
-        public void Record(double seconds, int executedTicks)
-        {
-            elapsed += seconds;
-            frames++;
-            ticks += executedTicks;
-            if (elapsed < 1) return;
-            FramesPerSecond = frames / elapsed;
-            TicksPerSecond = ticks / elapsed;
-            elapsed = 0;
-            frames = 0;
-            ticks = 0;
-        }
-        public void Reset()
-        {
-            elapsed = 0;
-            frames = 0;
-            ticks = 0;
-            FramesPerSecond = 0;
-            TicksPerSecond = 0;
         }
     }
 }

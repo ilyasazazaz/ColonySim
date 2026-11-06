@@ -52,8 +52,8 @@ namespace SimpleColony
                 int count = world.ProfessionCount((Profession)i);
                 counts[i].text = count.ToString();
                 decrease[i].interactable = !world.Lost && count > 0;
-                increase[i].interactable = !world.Lost && free > 0;
-                increaseThree[i].interactable = !world.Lost && free >= 3;
+                increase[i].interactable = world.Supports((Profession)i) && !world.Lost && free > 0;
+                increaseThree[i].interactable = world.Supports((Profession)i) && !world.Lost && free >= 3;
             }
         }
         static Button Counter(Transform parent, Font font, string text, float x, float y, UnityEngine.Events.UnityAction action)

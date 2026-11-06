@@ -57,7 +57,13 @@ namespace SimpleColony
                     for (int i = 0; i < node.Deposits.Count; i++)
                     {
                         var deposit = node.Deposits[i];
-                        float start = i * sector + 3, span = sector - 6;
+                        float gap = node.Deposits.Count == 1 ? 0 : 6;
+                        float start = i * sector + gap / 2, span = sector - gap;
+                        if (deposit.Amount > 0)
+                        {
+                            float offset = (i - (node.Deposits.Count - 1) * .5f) * 9;
+                            Square(mesh, position + Vector2.right * offset, 2.8f, Palette.Resources[(int)deposit.Type]);
+                        }
                         Arc(mesh, position, 22, 26, start, span, new Color(.25f, .28f, .32f));
                         Arc(mesh, position, 22, 26, start, span * deposit.Amount / deposit.Capacity, Palette.Resources[(int)deposit.Type]);
                     }
