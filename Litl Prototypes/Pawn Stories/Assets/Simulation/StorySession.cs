@@ -17,6 +17,8 @@ namespace PawnStories
 
         public int Seed { get; }
         public int Turn { get; private set; }
+        public int Hour => (8 + Turn) % 24;
+        public int Day => (8 + Turn) / 24 + 1;
         public bool TicketsEnabled { get; private set; } = true;
         public IReadOnlyList<Pawn> Pawns { get; }
         public IReadOnlyList<WorkTicket> Tickets { get; }
@@ -67,16 +69,16 @@ namespace PawnStories
 
         public void Step()
         {
-            Turn++;
             // Everyone chooses from the same public board, before any work is done.
-            foreach (Pawn pawn in pawns) pawn.Choose(tickets, TicketsEnabled);
+            foreach (Pawn pawn in pawns) pawn.Choose(tickets, TicketsEnabled, Hour);
             // Rotate execution order so the same pawn does not always contribute first.
             for (int i = 0; i < pawns.Count; i++)
             {
-                Pawn pawn = pawns[(i + Turn - 1) % pawns.Count];
+                Pawn pawn = pawns[(i + Turn) % pawns.Count];
                 string action = pawn.Act();
                 events.Add(new StoryEvent(Turn, pawn.Profile, action, pawn.Intention.Reason));
             }
+            Turn++;
         }
     }
 }

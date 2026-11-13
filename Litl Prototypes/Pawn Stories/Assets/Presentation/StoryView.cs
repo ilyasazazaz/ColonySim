@@ -73,9 +73,9 @@ namespace PawnStories
                 }
                 else error = "Введите целое число от −2147483648 до 2147483647.";
             }
-            if (GUILayout.Button(Label("Следующий ход", "step-forward"), button, GUILayout.Width(145))) session.Step();
+            if (GUILayout.Button(Label("Следующий час", "step-forward"), button, GUILayout.Width(145))) session.Step();
             GUILayout.EndHorizontal();
-            GUILayout.Label($"Seed {session.Seed}  /  Ход {session.Turn}", wrapped);
+            GUILayout.Label(Label($"День {session.Day} · {session.Hour:00}:00  /  Seed {session.Seed}", "clock"), wrapped);
             if (error != null) GUILayout.Label(error, wrapped);
             int nextTab = GUILayout.Toolbar(tab, tabs, button);
             if (nextTab != tab)
@@ -94,7 +94,8 @@ namespace PawnStories
             for (int i = 0; i < session.Pawns.Count; i++)
             {
                 PawnProfile profile = session.Pawns[i].Profile;
-                var item = Label(profile.Name, Icon(profile.Value), StoryText.MotiveName(profile.Value));
+                DailyPhase phase = session.Pawns[i].Schedule.At(session.Hour);
+                var item = Label(profile.Name, PhaseIcon(phase), PhaseLabel(phase));
                 if (GUILayout.Toggle(selected == i, item, button) && selected != i)
                 {
                     selected = i;
@@ -136,20 +137,27 @@ namespace PawnStories
 
         void DrawOverview(Pawn pawn)
         {
+            DailySchedule schedule = pawn.Schedule;
+            DailyPhase phase = schedule.At(session.Hour);
+            GUILayout.Label(Label(PhaseLabel(phase), PhaseIcon(phase)), wrapped);
+            GUILayout.Label(Label($"Сон {schedule.SleepHour:00}–{schedule.WakeHour:00} · Работа {schedule.WorkHour:00}–{schedule.WorkEnd:00}", "clock"), wrapped);
             Decision decision = pawn.Intention;
-            if (decision == null) GUILayout.Label("Ожидает первого хода", wrapped);
+            if (decision == null) GUILayout.Label("Ожидает первого решения", wrapped);
             else
             {
-                GUILayout.Label(Label(StoryText.Intention(decision), decision.Rest ? "clock" : Icon(decision.Goal)), heading);
-                if (!decision.Rest) GUILayout.Label(StoryText.Goal(decision.Goal), wrapped);
+                bool hasGoal = decision.Kind == DecisionKind.Personal || decision.Kind == DecisionKind.Ticket;
+                GUILayout.Label(Label(StoryText.Intention(decision), hasGoal ? Icon(decision.Goal) : "clock"), heading);
+                if (hasGoal) GUILayout.Label(StoryText.Goal(decision.Goal), wrapped);
                 if (GUILayout.Button(Label("Почему?", "circle-help"), button, GUILayout.Width(106))) showReason = !showReason;
                 if (showReason) GUILayout.Label(decision.Reason, wrapped);
             }
             GUILayout.Space(8);
+            GUILayout.Label("Потребности", heading);
+            Meter("Энергия", pawn.Energy, icon: "zap");
+            Meter("Голод", pawn.Hunger, icon: "heart");
             GUILayout.Label("Желания", heading);
             for (int i = 0; i < pawn.Desires.Count; i++)
                 Meter(StoryText.MotiveName((Motive)i), pawn.Desires[i], icon: Icon((Motive)i));
-            Meter("Энергия", pawn.Energy, icon: "zap");
         }
 
         void DrawJournal(PawnProfile profile)
@@ -167,7 +175,8 @@ namespace PawnStories
                 if (entry.Turn != currentTurn)
                 {
                     currentTurn = entry.Turn;
-                    GUILayout.Label(Label($"Ход {currentTurn}", "clock"), heading);
+                    int elapsed = 8 + currentTurn;
+                    GUILayout.Label(Label($"День {elapsed / 24 + 1} · {elapsed % 24:00}:00", "clock"), heading);
                 }
                 string actor = profile == null ? entry.Actor + " · " : "";
                 string symbol = entry.PawnId.HasValue ? "chevron-right" : "clipboard-list";
@@ -246,6 +255,12 @@ namespace PawnStories
                 default: return "wrench";
             }
         }
+
+        static string PhaseIcon(DailyPhase phase) =>
+            phase == DailyPhase.Sleep ? "clock" : phase == DailyPhase.Work ? "clipboard-list" : "user-round";
+
+        static string PhaseLabel(DailyPhase phase) =>
+            phase == DailyPhase.Sleep ? "Сон" : phase == DailyPhase.Work ? "Рабочее время" : "Личное время";
 
         GUIContent Label(string label, string icon, string tooltip = null)
         {

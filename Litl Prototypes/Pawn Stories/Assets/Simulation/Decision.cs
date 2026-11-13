@@ -1,18 +1,20 @@
 namespace PawnStories
 {
+    public enum DecisionKind { Personal, Ticket, Rest, Sleep, Eat }
+
     public sealed class Decision
     {
         public Motive Goal { get; }
         public WorkTicket Ticket { get; }
-        public bool Rest { get; }
+        public DecisionKind Kind { get; }
         public string Reason { get; }
         internal int Score { get; }
 
-        internal Decision(Motive goal, WorkTicket ticket, bool rest, string reason, int score)
+        internal Decision(Motive goal, WorkTicket ticket, DecisionKind kind, string reason, int score)
         {
             Goal = goal;
             Ticket = ticket;
-            Rest = rest;
+            Kind = kind;
             Reason = reason;
             Score = score;
         }

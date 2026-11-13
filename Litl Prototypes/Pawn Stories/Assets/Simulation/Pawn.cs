@@ -9,6 +9,8 @@ namespace PawnStories
         public PawnProfile Profile { get; }
         public IReadOnlyList<int> Desires { get; }
         public int Energy { get; private set; }
+        public int Hunger { get; private set; }
+        public DailySchedule Schedule { get; }
         public Decision Intention { get; private set; }
 
         internal Pawn(PawnProfile profile, Random random)
@@ -16,6 +18,8 @@ namespace PawnStories
             Profile = profile;
             Desires = Array.AsReadOnly(desires);
             Energy = random.Next(55, 96);
+            Hunger = random.Next(12, 41);
+            Schedule = new DailySchedule(random.Next(5, 11));
             desires[(int)Motive.Connection] = 24 + profile.Sociability / 3;
             desires[(int)Motive.Security] = 24 + (100 - profile.Boldness) / 3;
             desires[(int)Motive.Discovery] = 24 + profile.Boldness / 3;
@@ -24,20 +28,30 @@ namespace PawnStories
             for (int i = 0; i < desires.Length; i++) desires[i] += random.Next(-8, 9);
         }
 
-        internal void Choose(IReadOnlyList<WorkTicket> tickets, bool considerTickets)
+        internal void Choose(IReadOnlyList<WorkTicket> tickets, bool considerTickets, int hour)
         {
             int highestMotive = 0;
             for (int i = 1; i < desires.Length; i++)
                 if (desires[i] > desires[highestMotive]) highestMotive = i;
 
+            Motive goal = (Motive)highestMotive;
+            DailyPhase phase = Schedule.At(hour);
+            if (phase == DailyPhase.Sleep)
+            {
+                Intention = new Decision(goal, null, DecisionKind.Sleep, $"Время сна по личному графику, {hour:00}:00.", 0);
+                return;
+            }
             int personalScore = desires[highestMotive];
-            var choice = new Decision((Motive)highestMotive, null, false, "Самое сильное личное желание", personalScore);
+            var choice = new Decision(goal, null, DecisionKind.Personal, "Самое сильное личное желание", personalScore);
             int restScore = 114 - Energy * 2;
             if (restScore > choice.Score)
-                choice = new Decision((Motive)highestMotive, null, true, $"Энергия {Energy}/100, отдых важнее работы", restScore);
+                choice = new Decision(goal, null, DecisionKind.Rest, $"Энергия {Energy}/100, нужен отдых", restScore);
+            int mealScore = Hunger * 2 - 38;
+            if (mealScore > choice.Score)
+                choice = new Decision(goal, null, DecisionKind.Eat, $"Голод {Hunger}/100, пора поесть", mealScore);
 
             Decision bestTicket = null;
-            if (considerTickets && Energy >= 18)
+            if (considerTickets && phase == DailyPhase.Work && Energy >= 18)
             {
                 foreach (var ticket in tickets)
                 {
@@ -53,33 +67,46 @@ namespace PawnStories
                     {
                         string reason = $"Желание {desire} · приоритет +{priority} · навык +{skill} · " +
                             $"вкус {taste:+0;-0;0} · приверженность +{commitment} · усилие −{effort}";
-                        bestTicket = new Decision(ticket.Motive, ticket, false, reason, score);
+                        bestTicket = new Decision(ticket.Motive, ticket, DecisionKind.Ticket, reason, score);
                     }
                 }
             }
 
             if (bestTicket != null && bestTicket.Score > choice.Score)
             {
-                Intention = new Decision(bestTicket.Goal, bestTicket.Ticket, false,
+                Intention = new Decision(bestTicket.Goal, bestTicket.Ticket, DecisionKind.Ticket,
                     $"{bestTicket.Reason}. Итог {bestTicket.Score}, лучшая личная альтернатива {choice.Score}.",
                     bestTicket.Score);
             }
             else if (bestTicket != null)
             {
-                Intention = new Decision(choice.Goal, null, choice.Rest,
+                Intention = new Decision(choice.Goal, null, choice.Kind,
                     $"{choice.Reason} ({choice.Score}). Лучшая задача «{bestTicket.Ticket.Title}» набрала {bestTicket.Score}.",
                     choice.Score);
             }
-            else Intention = choice;
+            else Intention = phase == DailyPhase.Awake
+                ? new Decision(choice.Goal, null, choice.Kind, $"{choice.Reason}. Сейчас личное время по графику.", choice.Score)
+                : choice;
         }
 
         internal string Act()
         {
             for (int i = 0; i < desires.Length; i++)
                 desires[i] = Math.Min(100, desires[i] + 3);
-            if (Intention.Rest)
+            Hunger = Math.Min(100, Hunger + (Intention.Kind == DecisionKind.Sleep ? 3 : 7));
+            if (Intention.Kind == DecisionKind.Sleep)
             {
-                Energy = Math.Min(100, Energy + 34);
+                Energy = Math.Min(100, Energy + 13);
+                return "Сон";
+            }
+            if (Intention.Kind == DecisionKind.Eat)
+            {
+                Hunger = Math.Max(0, Hunger - 42);
+                return "Приём пищи";
+            }
+            if (Intention.Kind == DecisionKind.Rest)
+            {
+                Energy = Math.Min(100, Energy + 25);
                 return "Отдых";
             }
 

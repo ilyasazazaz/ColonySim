@@ -13,7 +13,16 @@ namespace PawnStories
         public static string PersonalAction(Motive motive) => Actions[(int)motive];
         public static string SkillName(Skill skill) => Skills[(int)skill];
         public static string TopicName(Topic topic) => Topics[(int)topic];
-        public static string Intention(Decision decision) => decision.Rest ? "Восстановить силы" :
-            decision.Ticket?.Title ?? PersonalAction(decision.Goal);
+        public static string Intention(Decision decision)
+        {
+            switch (decision.Kind)
+            {
+                case DecisionKind.Sleep: return "Спать";
+                case DecisionKind.Eat: return "Поесть";
+                case DecisionKind.Rest: return "Восстановить силы";
+                case DecisionKind.Ticket: return decision.Ticket.Title;
+                default: return PersonalAction(decision.Goal);
+            }
+        }
     }
 }
